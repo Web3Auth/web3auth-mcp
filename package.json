@@ -1,0 +1,42 @@
+{
+  "name": "@web3auth/mcp-server",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "web3auth-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch",
+    "dev:http": "next dev --webpack",
+    "build:all": "tsc && next build --webpack"
+  },
+  "keywords": [
+    "web3auth",
+    "metamask",
+    "embedded-wallets",
+    "mcp",
+    "ai"
+  ],
+  "author": "Web3Auth",
+  "license": "MIT",
+  "description": "MCP server for MetaMask Embedded Wallets (Web3Auth) - helps AI coding agents integrate Web3Auth SDKs",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "cheerio": "^1.1.0",
+    "lru-cache": "^11.2.6",
+    "mcp-handler": "^1.0.7",
+    "next": "^16.1.6",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^5.9.3"
+  }
+}
