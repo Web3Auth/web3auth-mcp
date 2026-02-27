@@ -1,7 +1,11 @@
 import { getCached, setCache } from "./cache.js";
+import type { SdkRepoConfig, SdkModule, FilePurpose } from "../content/sdk-registry.js";
 
 const GITHUB_RAW_BASE = "https://raw.githubusercontent.com";
 const GITHUB_API_BASE = "https://api.github.com/repos";
+
+const SDK_CACHE_TTL_MS = 4 * 60 * 60 * 1000; // 4 hours — SDK code changes less often
+const PUBLIC_API_THRESHOLD = 15_000; // bytes — above this, extract public API only
 
 const SKIP_FILES = new Set([
   "package-lock.json",
@@ -196,4 +200,175 @@ export async function fetchExampleFull(
   }
 
   return results;
+}
+
+// ── SDK source file fetching ─────────────────────────────────────────────
+
+function getGitHubHeaders(): Record<string, string> {
+  const headers: Record<string, string> = { "User-Agent": "Web3Auth-MCP-Server/2.0" };
+  const token = process.env.GITHUB_TOKEN;
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  return headers;
+}
+
+/** Fetch a single file from an SDK repo with long-lived cache. */
+export async function fetchSdkFile(
+  owner: string,
+  repo: string,
+  branch: string,
+  filePath: string,
+): Promise<string> {
+  const cacheKey = `sdk:${owner}/${repo}/${branch}/${filePath}`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
+  const url = `${GITHUB_RAW_BASE}/${owner}/${repo}/${branch}/${filePath}`;
+  const response = await fetch(url, { headers: getGitHubHeaders() });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${filePath}: ${response.status}`);
+  }
+
+  const raw = await response.text();
+  const content = processForLLM(raw, filePath);
+  setCache(cacheKey, content, SDK_CACHE_TTL_MS);
+  return content;
+}
+
+export interface SdkFileResult {
+  path: string;
+  description: string;
+  purpose: FilePurpose;
+  content: string;
+}
+
+/**
+ * Fetch all files in an SDK module in parallel.
+ * Reuses the Promise.allSettled pattern from fetchExampleFull.
+ */
+export async function fetchSdkModule(
+  config: SdkRepoConfig,
+  mod: SdkModule,
+): Promise<SdkFileResult[]> {
+  const cacheKey = `sdk:mod:${config.owner}/${config.repo}/${mod.id}`;
+  const cached = getCached(cacheKey);
+  if (cached) return JSON.parse(cached) as SdkFileResult[];
+
+  const results = await Promise.allSettled(
+    mod.files.map(async (file): Promise<SdkFileResult> => {
+      const content = await fetchSdkFile(config.owner, config.repo, config.branch, file.path);
+      return { path: file.path, description: file.description, purpose: file.purpose, content };
+    }),
+  );
+
+  const successes = results
+    .filter((r): r is PromiseFulfilledResult<SdkFileResult> => r.status === "fulfilled")
+    .map((r) => r.value);
+
+  if (successes.length > 0) {
+    setCache(cacheKey, JSON.stringify(successes), SDK_CACHE_TTL_MS);
+  }
+
+  return successes;
+}
+
+// ── Public API extraction for large files ────────────────────────────────
+
+/**
+ * Process source code for LLM consumption.
+ * Type/interface files are returned as-is (maximally useful).
+ * Large implementation files get their public API surface extracted.
+ */
+function processForLLM(content: string, filePath: string): string {
+  if (isTypeFile(filePath)) return content;
+  if (content.length <= PUBLIC_API_THRESHOLD) return content;
+  return extractPublicApi(content, filePath);
+}
+
+function isTypeFile(path: string): boolean {
+  const lower = path.toLowerCase();
+  return (
+    lower.includes("interface") ||
+    lower.includes("/types") ||
+    lower.endsWith(".d.ts") ||
+    lower.includes("enums") ||
+    lower.includes("constants") ||
+    lower.includes("config.ts") ||
+    lower.includes("config.js") ||
+    lower.includes("errors")
+  );
+}
+
+/**
+ * Extract public API surface from a large source file.
+ * Keeps: class/interface/type/enum declarations, method signatures, exports.
+ * Strips: method bodies, private internals, large comment blocks.
+ */
+function extractPublicApi(content: string, filePath: string): string {
+  const ext = filePath.split(".").pop()?.toLowerCase() ?? "";
+  const lines = content.split("\n");
+
+  const keepPatterns = getKeepPatterns(ext);
+  if (!keepPatterns.length) {
+    // Unknown language — return truncated
+    return content.substring(0, PUBLIC_API_THRESHOLD) + "\n\n// ... truncated (see full source in repo)";
+  }
+
+  const result: string[] = [];
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed === "" || trimmed === "}" || trimmed === "};") {
+      result.push(line);
+      continue;
+    }
+    if (keepPatterns.some((p) => p.test(trimmed))) {
+      result.push(line);
+    }
+  }
+
+  const extracted = result.join("\n");
+  return `// === PUBLIC API SURFACE (extracted from ${(content.length / 1024).toFixed(1)}KB source) ===\n// Full source: see SDK repo\n\n${extracted}`;
+}
+
+function getKeepPatterns(ext: string): RegExp[] {
+  switch (ext) {
+    case "ts":
+    case "tsx":
+    case "js":
+    case "jsx":
+      return [
+        /^export\s/, /^import\s/,
+        /^(export\s+)?(interface|type|enum|class|abstract|const)\s/,
+        /^\s*(public|protected|private|readonly|static|async|get|set)\s/,
+        /^\s*constructor\s*\(/, /^\s*\w+\s*\(.*\)\s*[:{]/,
+      ];
+    case "kt":
+      return [
+        /^(package|import)\s/, /^@/,
+        /^(data\s+class|class|interface|enum|sealed|object|fun|suspend\s+fun|val|var|companion)\s/,
+      ];
+    case "swift":
+      return [
+        /^import\s/, /^@/,
+        /^(public|open|internal)?\s*(class|struct|protocol|enum|func|var|let|init|case)\s/,
+      ];
+    case "dart":
+      return [
+        /^(import|export)\s/,
+        /^(class|abstract|enum|mixin|extension|typedef|factory|Future|static|final)\s/,
+      ];
+    case "cs":
+      return [
+        /^(using|namespace)\s/, /^\[/,
+        /^(public|internal|protected|private)?\s*(class|interface|struct|enum|static|void|async)\s/,
+      ];
+    case "cpp":
+    case "h":
+      return [
+        /^#(include|pragma|define)\s/, /^(class|struct|enum|namespace|virtual|static)\s/,
+        /^(UCLASS|UPROPERTY|UFUNCTION|GENERATED_BODY)/,
+      ];
+    default:
+      return [];
+  }
 }

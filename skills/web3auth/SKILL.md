@@ -34,6 +34,16 @@ Use these tools in this order:
    - Example: `search_community query="popup blocked safari iOS"`
    - Example: `search_community topic_id=2751`
 
+5. **`get_sdk_reference`** — Fetch SDK source code (types, interfaces, hooks) from the open-source repos.
+   - Use for verifying exact type shapes when adapting example code.
+   - Use for debugging errors by checking what the SDK actually expects.
+   - Use only the released versions on GitHub, or the version you are currently integrating according to the example. Since active development goes on the SDK code on main branch can be related to a future unreleased version.
+   - Use for confirming parameter types when docs are ambiguous.
+   - **Do NOT use to discover new features or flags.** Many SDK options are internal, legacy, or unnecessary. Examples (`get_example`) show what to actually use.
+   - Default call returns type definitions: `get_sdk_reference platform="react"`
+   - Targeted: `get_sdk_reference platform="react" module="react-hooks"`
+   - Call without `module` first to see available modules for a platform.
+
 ### Decision workflow
 
 ```

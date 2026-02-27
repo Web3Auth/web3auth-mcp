@@ -1,7 +1,7 @@
 import { LRUCache } from "lru-cache";
 
 const DEFAULT_TTL_MS = 60 * 60 * 1000; // 1 hour
-const MAX_ENTRIES = 200;
+const MAX_ENTRIES = 500;
 
 const cache = new LRUCache<string, string>({
   max: MAX_ENTRIES,
