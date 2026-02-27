@@ -1,0 +1,307 @@
+import { getCached, setCache } from "./cache.js";
+
+const ALGOLIA_APP_ID = "W4ZOZ72ZFG";
+const ALGOLIA_API_KEY = "b4e925aa9bf05e5bef2e40b3ee6ee431";
+const ALGOLIA_INDEX = "mmdocs";
+const ALGOLIA_HOST = `https://${ALGOLIA_APP_ID}-dsn.algolia.net`;
+
+const LLMS_FULL_URL = "https://docs.metamask.io/llms-embedded-wallets-full.txt";
+const GITHUB_API_BASE = "https://api.github.com/repos/MetaMask/metamask-docs/contents";
+const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/MetaMask/metamask-docs/main";
+
+// ── Types ────────────────────────────────────────────────────────────────
+
+export interface AlgoliaHit {
+  objectID: string;
+  url: string;
+  title?: string;
+  content?: string;
+  hierarchy?: {
+    lvl0?: string;
+    lvl1?: string;
+    lvl2?: string;
+    lvl3?: string;
+    lvl4?: string;
+    lvl5?: string;
+  };
+  type?: string;
+  _snippetResult?: {
+    content?: { value: string };
+    hierarchy?: { [key: string]: { value: string } };
+  };
+}
+
+export interface DocSearchResult {
+  title: string;
+  url: string;
+  snippet: string;
+  hierarchy: string;
+}
+
+// ── Algolia Search ───────────────────────────────────────────────────────
+
+export async function searchAlgolia(
+  query: string,
+  opts: { hitsPerPage?: number; filterEmbeddedWallets?: boolean } = {},
+): Promise<AlgoliaHit[]> {
+  const cacheKey = `algolia:search:${query}:${JSON.stringify(opts)}`;
+  const cached = getCached(cacheKey);
+  if (cached) return JSON.parse(cached) as AlgoliaHit[];
+
+  const body: Record<string, unknown> = {
+    query,
+    hitsPerPage: opts.hitsPerPage ?? 20,
+    attributesToRetrieve: ["objectID", "url", "title", "content", "hierarchy", "type"],
+    attributesToSnippet: ["content:30", "hierarchy.lvl1:20"],
+    highlightPreTag: "",
+    highlightPostTag: "",
+  };
+
+  if (opts.filterEmbeddedWallets) {
+    body.filters = 'url:"https://docs.metamask.io/embedded-wallets"';
+    body.facetFilters = [["url:https://docs.metamask.io/embedded-wallets*"]];
+  }
+
+  try {
+    const response = await fetch(`${ALGOLIA_HOST}/1/indexes/${ALGOLIA_INDEX}/query`, {
+      method: "POST",
+      headers: {
+        "X-Algolia-Application-Id": ALGOLIA_APP_ID,
+        "X-Algolia-API-Key": ALGOLIA_API_KEY,
+        "Content-Type": "application/json",
+        "User-Agent": "Web3Auth-MCP-Server/2.0",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Algolia search failed: ${response.status} ${response.statusText}`);
+    }
+
+    const data = (await response.json()) as { hits: AlgoliaHit[] };
+    setCache(cacheKey, JSON.stringify(data.hits));
+    return data.hits;
+  } catch (err) {
+    console.error("Algolia search error:", err);
+    return [];
+  }
+}
+
+// ── Format search results ────────────────────────────────────────────────
+
+export function formatAlgoliaHits(hits: AlgoliaHit[]): DocSearchResult[] {
+  return hits
+    .filter((h) => h.url?.includes("embedded-wallets"))
+    .map((h) => {
+      const hier = h.hierarchy ?? {};
+      const breadcrumb = [hier.lvl0, hier.lvl1, hier.lvl2, hier.lvl3]
+        .filter(Boolean)
+        .join(" > ");
+
+      const snippet =
+        h._snippetResult?.content?.value ||
+        h.content?.slice(0, 200) ||
+        breadcrumb;
+
+      return {
+        title: h.title ?? hier.lvl1 ?? hier.lvl0 ?? "Untitled",
+        url: h.url ?? "",
+        snippet: snippet.trim(),
+        hierarchy: breadcrumb,
+      };
+    })
+    .filter((r) => r.url);
+}
+
+// ── Fetch full page from Algolia ─────────────────────────────────────────
+
+export async function fetchDocPageFromAlgolia(url: string): Promise<string | null> {
+  // Normalise URL: ensure trailing slash, strip hash/query
+  const normalised = url.replace(/[?#].*$/, "").replace(/\/?$/, "/");
+  const cacheKey = `algolia:page:${normalised}`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const response = await fetch(`${ALGOLIA_HOST}/1/indexes/${ALGOLIA_INDEX}/query`, {
+      method: "POST",
+      headers: {
+        "X-Algolia-Application-Id": ALGOLIA_APP_ID,
+        "X-Algolia-API-Key": ALGOLIA_API_KEY,
+        "Content-Type": "application/json",
+        "User-Agent": "Web3Auth-MCP-Server/2.0",
+      },
+      body: JSON.stringify({
+        query: "",
+        hitsPerPage: 100,
+        filters: `url:"${normalised}"`,
+        attributesToRetrieve: ["objectID", "url", "title", "content", "hierarchy", "type", "anchor"],
+      }),
+    });
+
+    if (!response.ok) return null;
+
+    const data = (await response.json()) as { hits: AlgoliaHit[] };
+    if (!data.hits.length) return null;
+
+    // Sort hits by type (lvl0 -> lvl1 -> ... -> content) and reconstruct page
+    const ordered = data.hits.sort((a, b) => {
+      const typeOrder = ["lvl0", "lvl1", "lvl2", "lvl3", "lvl4", "lvl5", "content"];
+      return typeOrder.indexOf(a.type ?? "content") - typeOrder.indexOf(b.type ?? "content");
+    });
+
+    const lines: string[] = [];
+    for (const hit of ordered) {
+      const hier = hit.hierarchy ?? {};
+      if (hit.type?.startsWith("lvl")) {
+        const level = parseInt(hit.type.replace("lvl", "")) + 1;
+        const heading = hier[hit.type as keyof typeof hier] ?? hit.title;
+        if (heading) lines.push(`${"#".repeat(Math.min(level, 6))} ${heading}\n`);
+      } else if (hit.content) {
+        lines.push(hit.content + "\n");
+      }
+    }
+
+    const result = lines.join("\n").trim();
+    if (result) setCache(cacheKey, result);
+    return result || null;
+  } catch {
+    return null;
+  }
+}
+
+// ── Fetch full page from llms.txt ────────────────────────────────────────
+
+export async function fetchDocPageFromLlmsTxt(url: string): Promise<string | null> {
+  const cacheKey = "llms:full-txt";
+  let fullText = getCached(cacheKey);
+
+  if (!fullText) {
+    try {
+      const response = await fetch(LLMS_FULL_URL, {
+        headers: { "User-Agent": "Web3Auth-MCP-Server/2.0" },
+      });
+      if (!response.ok) return null;
+      fullText = await response.text();
+      // Cache for 6 hours -- this file is large but doesn't change often
+      setCache(cacheKey, fullText, 6 * 60 * 60 * 1000);
+    } catch {
+      return null;
+    }
+  }
+
+  // The llms.txt file uses "# URL\n\ncontent\n\n---\n\n" sections
+  const normUrl = url.replace(/\/?$/, "/");
+  const escapedUrl = normUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const sectionPattern = new RegExp(
+    `(?:^|\\n)(?:#+\\s+)?${escapedUrl}[^\\n]*\\n([\\s\\S]*?)(?=\\n#+\\s+https?://|\\n---\\n|$)`,
+    "i",
+  );
+  const match = fullText.match(sectionPattern);
+  if (match?.[1]?.trim()) return match[1].trim();
+
+  // Fallback: try matching by path segment
+  const pathMatch = url.match(/embedded-wallets\/.+/)?.[0];
+  if (pathMatch) {
+    const pathPattern = new RegExp(
+      `(?:^|\\n)(?:#+\\s+)?[^\\n]*${pathMatch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}[^\\n]*\\n([\\s\\S]*?)(?=\\n#+\\s+https?://|\\n---\\n|$)`,
+      "i",
+    );
+    const pathMatch2 = fullText.match(pathPattern);
+    if (pathMatch2?.[1]?.trim()) return pathMatch2[1].trim();
+  }
+
+  return null;
+}
+
+// ── Fetch raw MDX from GitHub ────────────────────────────────────────────
+
+export async function fetchDocPageFromGitHub(url: string): Promise<string | null> {
+  // Map docs.metamask.io/embedded-wallets/... -> embedded-wallets/...
+  const match = url.match(/docs\.metamask\.io\/(.+)/);
+  if (!match) return null;
+
+  let repoPath = match[1].replace(/\/$/, "").replace(/[?#].*$/, "");
+
+  const cacheKey = `gh:mdx:${repoPath}`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
+  // Try to find the .mdx file -- could be README.mdx, index.mdx, or <last-segment>.mdx
+  const candidates = buildMdxCandidates(repoPath);
+
+  for (const candidate of candidates) {
+    try {
+      const rawUrl = `${GITHUB_RAW_BASE}/${candidate}`;
+      const response = await fetch(rawUrl, {
+        headers: { "User-Agent": "Web3Auth-MCP-Server/2.0" },
+      });
+      if (response.ok) {
+        const content = await response.text();
+        setCache(cacheKey, content);
+        return content;
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  // Try GitHub Contents API to discover the actual file
+  try {
+    const apiUrl = `${GITHUB_API_BASE}/${repoPath}`;
+    const response = await fetch(apiUrl, {
+      headers: { "User-Agent": "Web3Auth-MCP-Server/2.0" },
+    });
+    if (response.ok) {
+      const items = (await response.json()) as Array<{ name: string; type: string; download_url: string | null }>;
+      const mdxFile = items.find((i) => i.type === "file" && (i.name.endsWith(".mdx") || i.name.endsWith(".md")));
+      if (mdxFile?.download_url) {
+        const fileResp = await fetch(mdxFile.download_url, {
+          headers: { "User-Agent": "Web3Auth-MCP-Server/2.0" },
+        });
+        if (fileResp.ok) {
+          const content = await fileResp.text();
+          setCache(cacheKey, content);
+          return content;
+        }
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  return null;
+}
+
+function buildMdxCandidates(repoPath: string): string[] {
+  const segments = repoPath.split("/");
+  const last = segments[segments.length - 1];
+  const parent = segments.slice(0, -1).join("/");
+
+  return [
+    `${repoPath}/README.mdx`,
+    `${repoPath}/index.mdx`,
+    `${repoPath}.mdx`,
+    parent ? `${parent}/${last}.mdx` : `${last}.mdx`,
+    `${repoPath}/README.md`,
+    `${repoPath}/index.md`,
+  ].filter(Boolean);
+}
+
+// ── Main: fetch doc page with fallback chain ─────────────────────────────
+
+export async function fetchDocPage(url: string): Promise<string> {
+  // Tier 1: Algolia
+  const algoliaContent = await fetchDocPageFromAlgolia(url);
+  if (algoliaContent) return algoliaContent;
+
+  // Tier 2: llms.txt
+  const llmsContent = await fetchDocPageFromLlmsTxt(url);
+  if (llmsContent) return llmsContent;
+
+  // Tier 3: GitHub raw MDX
+  const githubContent = await fetchDocPageFromGitHub(url);
+  if (githubContent) return githubContent;
+
+  throw new Error(`Could not fetch content for ${url} from any source`);
+}

@@ -24,8 +24,7 @@
   "license": "MIT",
   "description": "MCP server for MetaMask Embedded Wallets (Web3Auth) - helps AI coding agents integrate Web3Auth SDKs",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.26.0",
-    "cheerio": "^1.1.0",
+    "@modelcontextprotocol/sdk": "1.25.2",
     "lru-cache": "^11.2.6",
     "mcp-handler": "^1.0.7",
     "next": "^16.1.6",
