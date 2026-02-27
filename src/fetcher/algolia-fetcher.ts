@@ -1,4 +1,5 @@
 import { getCached, setCache } from "./cache.js";
+import { GITHUB_RAW_BASE, GITHUB_API_BASE } from "./github-fetcher.js";
 
 const ALGOLIA_APP_ID = "W4ZOZ72ZFG";
 const ALGOLIA_API_KEY = "b4e925aa9bf05e5bef2e40b3ee6ee431";
@@ -6,8 +7,11 @@ const ALGOLIA_INDEX = "mmdocs";
 const ALGOLIA_HOST = `https://${ALGOLIA_APP_ID}-dsn.algolia.net`;
 
 const LLMS_FULL_URL = "https://docs.metamask.io/llms-embedded-wallets-full.txt";
-const GITHUB_API_BASE = "https://api.github.com/repos/MetaMask/metamask-docs/contents";
-const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/MetaMask/metamask-docs/main";
+const METAMASK_DOCS_API = `${GITHUB_API_BASE}/MetaMask/metamask-docs/contents`;
+const METAMASK_DOCS_RAW = `${GITHUB_RAW_BASE}/MetaMask/metamask-docs/main`;
+
+const API_TIMEOUT_MS = 10_000;   // 10s for API calls
+const FILE_TIMEOUT_MS = 30_000;  // 30s for file downloads
 
 // ── Types ────────────────────────────────────────────────────────────────
 
@@ -72,6 +76,7 @@ export async function searchAlgolia(
         "User-Agent": "Web3Auth-MCP-Server/2.0",
       },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(API_TIMEOUT_MS),
     });
 
     if (!response.ok) {
@@ -134,9 +139,10 @@ export async function fetchDocPageFromAlgolia(url: string): Promise<string | nul
       body: JSON.stringify({
         query: "",
         hitsPerPage: 100,
-        filters: `url:"${normalised}"`,
+        filters: `url:"${normalised.replace(/"/g, '\\"')}"`,
         attributesToRetrieve: ["objectID", "url", "title", "content", "hierarchy", "type", "anchor"],
       }),
+      signal: AbortSignal.timeout(API_TIMEOUT_MS),
     });
 
     if (!response.ok) return null;
@@ -180,6 +186,7 @@ export async function fetchDocPageFromLlmsTxt(url: string): Promise<string | nul
     try {
       const response = await fetch(LLMS_FULL_URL, {
         headers: { "User-Agent": "Web3Auth-MCP-Server/2.0" },
+        signal: AbortSignal.timeout(FILE_TIMEOUT_MS),
       });
       if (!response.ok) return null;
       fullText = await response.text();
@@ -232,9 +239,10 @@ export async function fetchDocPageFromGitHub(url: string): Promise<string | null
 
   for (const candidate of candidates) {
     try {
-      const rawUrl = `${GITHUB_RAW_BASE}/${candidate}`;
+      const rawUrl = `${METAMASK_DOCS_RAW}/${candidate}`;
       const response = await fetch(rawUrl, {
         headers: { "User-Agent": "Web3Auth-MCP-Server/2.0" },
+        signal: AbortSignal.timeout(FILE_TIMEOUT_MS),
       });
       if (response.ok) {
         const content = await response.text();
@@ -248,9 +256,10 @@ export async function fetchDocPageFromGitHub(url: string): Promise<string | null
 
   // Try GitHub Contents API to discover the actual file
   try {
-    const apiUrl = `${GITHUB_API_BASE}/${repoPath}`;
+    const apiUrl = `${METAMASK_DOCS_API}/${repoPath}`;
     const response = await fetch(apiUrl, {
       headers: { "User-Agent": "Web3Auth-MCP-Server/2.0" },
+      signal: AbortSignal.timeout(API_TIMEOUT_MS),
     });
     if (response.ok) {
       const items = (await response.json()) as Array<{ name: string; type: string; download_url: string | null }>;
@@ -258,6 +267,7 @@ export async function fetchDocPageFromGitHub(url: string): Promise<string | null
       if (mdxFile?.download_url) {
         const fileResp = await fetch(mdxFile.download_url, {
           headers: { "User-Agent": "Web3Auth-MCP-Server/2.0" },
+          signal: AbortSignal.timeout(FILE_TIMEOUT_MS),
         });
         if (fileResp.ok) {
           const content = await fileResp.text();

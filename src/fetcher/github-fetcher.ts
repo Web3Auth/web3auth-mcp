@@ -1,11 +1,15 @@
 import { getCached, setCache } from "./cache.js";
 import type { SdkRepoConfig, SdkModule, FilePurpose } from "../content/sdk-registry.js";
 
-const GITHUB_RAW_BASE = "https://raw.githubusercontent.com";
-const GITHUB_API_BASE = "https://api.github.com/repos";
+export const GITHUB_RAW_BASE = "https://raw.githubusercontent.com";
+export const GITHUB_API_BASE = "https://api.github.com/repos";
 
 const SDK_CACHE_TTL_MS = 4 * 60 * 60 * 1000; // 4 hours — SDK code changes less often
 const PUBLIC_API_THRESHOLD = 15_000; // bytes — above this, extract public API only
+const API_TIMEOUT_MS = 10_000;   // 10s for API calls (directory listings)
+const FILE_TIMEOUT_MS = 30_000;  // 30s for file downloads
+const MAX_RECURSION_DEPTH = 5;
+const MAX_FILES = 200;
 
 const SKIP_FILES = new Set([
   "package-lock.json",
@@ -40,6 +44,7 @@ export async function fetchExampleFile(
 
   const response = await fetch(url, {
     headers: { "User-Agent": "Web3Auth-MCP-Server/2.0" },
+    signal: AbortSignal.timeout(FILE_TIMEOUT_MS),
   });
 
   if (!response.ok) {
@@ -49,31 +54,6 @@ export async function fetchExampleFile(
   const content = await response.text();
   setCache(`gh:${url}`, content);
   return content;
-}
-
-export async function fetchExampleReadme(
-  owner: string,
-  repo: string,
-  path: string,
-): Promise<string | null> {
-  try {
-    return await fetchExampleFile(owner, repo, path, "README.md");
-  } catch {
-    return null;
-  }
-}
-
-export async function fetchExamplePackageJson(
-  owner: string,
-  repo: string,
-  path: string,
-): Promise<Record<string, unknown> | null> {
-  try {
-    const content = await fetchExampleFile(owner, repo, path, "package.json");
-    return JSON.parse(content);
-  } catch {
-    return null;
-  }
 }
 
 export async function listExampleFiles(
@@ -88,6 +68,7 @@ export async function listExampleFiles(
 
   const response = await fetch(apiUrl, {
     headers: { "User-Agent": "Web3Auth-MCP-Server/2.0" },
+    signal: AbortSignal.timeout(API_TIMEOUT_MS),
   });
 
   if (!response.ok) return [];
@@ -114,12 +95,16 @@ async function listAllFiles(
   owner: string,
   repo: string,
   dirPath: string,
+  depth: number = 0,
 ): Promise<GitHubItem[]> {
+  if (depth >= MAX_RECURSION_DEPTH) return [];
+
   const apiUrl = `${GITHUB_API_BASE}/${owner}/${repo}/contents/${dirPath}`;
 
   try {
     const response = await fetch(apiUrl, {
       headers: { "User-Agent": "Web3Auth-MCP-Server/2.0" },
+      signal: AbortSignal.timeout(API_TIMEOUT_MS),
     });
     if (!response.ok) return [];
 
@@ -128,16 +113,17 @@ async function listAllFiles(
 
     await Promise.all(
       items.map(async (item) => {
+        if (results.length >= MAX_FILES) return;
         if (item.type === "file") {
           results.push(item);
         } else if (item.type === "dir" && item.name !== "node_modules" && !item.name.startsWith(".")) {
-          const nested = await listAllFiles(owner, repo, item.path);
+          const nested = await listAllFiles(owner, repo, item.path, depth + 1);
           results.push(...nested);
         }
       }),
     );
 
-    return results;
+    return results.slice(0, MAX_FILES);
   } catch {
     return [];
   }
@@ -181,6 +167,7 @@ export async function fetchExampleFull(
 
       const response = await fetch(item.download_url, {
         headers: { "User-Agent": "Web3Auth-MCP-Server/2.0" },
+        signal: AbortSignal.timeout(FILE_TIMEOUT_MS),
       });
 
       if (!response.ok) throw new Error(`Failed to fetch ${item.download_url}`);
@@ -223,7 +210,7 @@ export async function fetchSdkFile(
   if (cached) return cached;
 
   const url = `${GITHUB_RAW_BASE}/${owner}/${repo}/${branch}/${filePath}`;
-  const response = await fetch(url, { headers: getGitHubHeaders() });
+  const response = await fetch(url, { headers: getGitHubHeaders(), signal: AbortSignal.timeout(FILE_TIMEOUT_MS) });
 
   if (!response.ok) {
     throw new Error(`Failed to fetch ${filePath}: ${response.status}`);

@@ -3,7 +3,13 @@ import { fetchDocPage } from "../fetcher/algolia-fetcher.js";
 export async function handleGetDoc(args: { url: string }): Promise<string> {
   const { url } = args;
 
-  if (!url.includes("docs.metamask.io")) {
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(url);
+  } catch {
+    return `Error: Invalid URL. Got: ${url}`;
+  }
+  if (parsedUrl.hostname !== "docs.metamask.io") {
     return `Error: Only docs.metamask.io URLs are supported. Got: ${url}`;
   }
 

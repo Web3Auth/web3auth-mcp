@@ -89,11 +89,8 @@ Skills teach your AI assistant *how to think* about each SDK -- architecture, fr
 Copy the relevant skill folder to your project's `.cursor/skills/` directory:
 
 ```bash
-# Example: copy the React skill
-cp -r skills/metamask-embedded-react .cursor/skills/
-
-# Or copy the general skill (recommended for all projects)
-cp -r skills/metamask-embedded-general .cursor/skills/
+# Copy the unified skill (recommended for all projects)
+cp -r skills/web3auth .cursor/skills/
 ```
 
 Available skills:

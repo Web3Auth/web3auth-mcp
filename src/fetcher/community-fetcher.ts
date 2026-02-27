@@ -2,6 +2,7 @@ import { getCached, setCache } from "./cache.js";
 
 const DISCOURSE_BASE = "https://builder.metamask.io";
 const EMBEDDED_WALLETS_CATEGORY_ID = 5;
+const API_TIMEOUT_MS = 10_000; // 10s for Discourse API calls
 
 // ── Types ────────────────────────────────────────────────────────────────
 
@@ -93,6 +94,7 @@ export async function searchCommunity(query: string): Promise<CommunityTopic[]> 
   try {
     const response = await fetch(`${DISCOURSE_BASE}/search.json?${params}`, {
       headers: getAuthHeaders(),
+      signal: AbortSignal.timeout(API_TIMEOUT_MS),
     });
 
     if (!response.ok) {
@@ -156,6 +158,7 @@ export async function fetchCommunityTopic(topicId: number): Promise<CommunityTop
   try {
     const response = await fetch(`${DISCOURSE_BASE}/t/${topicId}.json`, {
       headers: getAuthHeaders(),
+      signal: AbortSignal.timeout(API_TIMEOUT_MS),
     });
 
     if (!response.ok) return null;

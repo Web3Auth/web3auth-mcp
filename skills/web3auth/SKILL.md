@@ -144,30 +144,13 @@ Community: https://builder.metamask.io/c/embedded-wallets/5
 - Dashboard chain configuration is not supported, however includes pre built EVM and Solana providers from web3auth. Private key can be reconstructed for both EVM (secp256k1) and Solana (ed25519) and curve can be changed for integration with any other blockchain as well. This makes integration blockchain agnostic. Use any standard library for blockchain calls.
 
 
-### Android SDK
-- Invisible SDK for Social logins in Android. Generates private key using socials within the frontend itself. No external wallets supported, user has to create their own UI as well. 
-- Server side verification and session management are available. Features like MFA, Wallet UI, Funding, Wallet Connect Interoperability, etc are supported via in app browser for security. Smart accounts are supported via browser transaction functions as well because of compatibility issues with Android.
-- Dashboard chain configuration is not supported, private key can be reconstructed for both EVM (secp256k1) and Solana (ed25519) and curve can be changed for integration with any other blockchain as well. This makes integration blockchain agnostic. Use any standard library for blockchain calls
+### Mobile & Game Engine SDKs (Android, iOS, Flutter, Unity, Unreal Engine)
 
-### iOS SDK
-- Invisible SDK for Social logins in iOS. Generates private key using socials within the frontend itself. No external wallets supported, user has to create their own UI as well. 
-- Server side verification and session management are available. Features like MFA, Wallet UI, Funding, Wallet Connect Interoperability, etc are supported via in app browser for security. Smart accounts are supported via browser transaction functions as well because of compatibility issues with iOS.
-- Dashboard chain configuration is not supported, private key can be reconstructed for both EVM (secp256k1) and Solana (ed25519) and curve can be changed for integration with any other blockchain as well. This makes integration blockchain agnostic. Use any standard library for blockchain calls
+All mobile and game engine SDKs share a common pattern:
 
-### Flutter SDK
-- Invisible SDK for Social logins in Flutter. Generates private key using socials within the frontend itself. No external wallets supported, user has to create their own UI as well. 
-- Server side verification and session management are available. Features like MFA, Wallet UI, Funding, Wallet Connect Interoperability, etc are supported via in app browser for security. Smart accounts are supported via browser transaction functions as well because of compatibility issues with Flutter.
-- Dashboard chain configuration is not supported, private key can be reconstructed for both EVM (secp256k1) and Solana (ed25519) and curve can be changed for integration with any other blockchain as well. This makes integration blockchain agnostic. Use any standard library for blockchain calls
-
-### Unity SDK
-- Invisible SDK for Social logins in Unity. Generates private key using socials within the frontend itself. No external wallets supported, user has to create their own UI as well. 
-- Server side verification and session management are available. Features like MFA, Wallet UI, Funding, Wallet Connect Interoperability, etc are supported via in app browser for security. Smart accounts are supported via browser transaction functions as well because of compatibility issues with Unity.
-- Dashboard chain configuration is not supported, private key can be reconstructed for both EVM (secp256k1) and Solana (ed25519) and curve can be changed for integration with any other blockchain as well. This makes integration blockchain agnostic. Use any standard library for blockchain calls
-
-### Unreal Engine SDK
-- Invisible SDK for Social logins in  Unreal Engine. Generates private key using socials within the frontend itself. No external wallets supported, user has to create their own UI as well. 
-- Server side verification and session management are available. Features like MFA, Wallet UI, Funding, Wallet Connect Interoperability, etc are supported via in app browser for security.
-- Dashboard chain configuration is not supported, private key can be reconstructed for both EVM (secp256k1) and Solana (ed25519) and curve can be changed for integration with any other blockchain as well. This makes integration blockchain agnostic. Use any standard library for blockchain calls
+- Invisible SDK for social logins. Generates private key using socials within the frontend. No external wallets supported; developers must create their own UI.
+- Server-side verification and session management are available. Features like MFA, Wallet UI, Funding, and WalletConnect Interoperability are supported via in-app browser. Smart accounts are supported via browser transaction functions.
+- Dashboard chain configuration is not supported. Private key can be reconstructed for both EVM (secp256k1) and Solana (ed25519), and the curve can be changed for any other blockchain. This makes integration blockchain agnostic. Use any standard library for blockchain calls.
 
 ### Node SDK (@web3auth/node-sdk) 
 - Invisible SDK for Social logins in Node.js environment. Generates private key using socials within the node environment itself. No external wallets supported. 
