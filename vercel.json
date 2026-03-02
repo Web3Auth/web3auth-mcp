@@ -1,6 +1,6 @@
 {
   "functions": {
-    "app/api/mcp/route.ts": {
+    "app/route.ts": {
       "maxDuration": 60
     }
   }
