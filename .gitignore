@@ -25,3 +25,6 @@ llms-full.txt
 .DS_Store
 .vercel
 coverage/
+
+.claude
+.cursor
