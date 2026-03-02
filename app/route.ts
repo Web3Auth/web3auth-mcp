@@ -12,7 +12,7 @@ const handler = createMcpHandler(
     },
   },
   {
-    basePath: "",
+    streamableHttpEndpoint: "/",
     maxDuration: 60,
   },
 );
