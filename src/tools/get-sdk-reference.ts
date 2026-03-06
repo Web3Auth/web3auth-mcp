@@ -31,6 +31,15 @@ export async function handleGetSdkReference(args: {
     const config = SDK_SOURCE_REGISTRY[key];
     if (!config) continue;
 
+    if (config.modules.length === 0) {
+      sections.push(
+        `No module mappings are configured for this SDK yet. Browse the repository directly:\n` +
+        `**${caps.sdkRepo}**\n\n` +
+        `Use \`get_example platform="${args.platform}"\` to see working integration examples instead.`,
+      );
+      continue;
+    }
+
     // Select modules to fetch
     let modules: SdkModule[];
 

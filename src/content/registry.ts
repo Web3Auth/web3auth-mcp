@@ -239,7 +239,3 @@ export function getExampleGitHubUrl(example: ExampleEntry): string {
   return example.path ? `${base}/tree/main/${example.path}` : base;
 }
 
-export function getExampleRawUrl(example: ExampleEntry, filePath: string): string {
-  const pathPrefix = example.path ? `${example.path}/` : "";
-  return `https://raw.githubusercontent.com/${example.owner}/${example.repo}/main/${pathPrefix}${filePath}`;
-}

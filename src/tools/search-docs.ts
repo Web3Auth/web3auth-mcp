@@ -1,4 +1,4 @@
-import { findExamples, getExampleGitHubUrl, type ExampleEntry } from "../content/registry.js";
+import { findExamples, getExampleGitHubUrl, searchDocs, type ExampleEntry } from "../content/registry.js";
 import { searchAlgolia, formatAlgoliaHits } from "../fetcher/algolia-fetcher.js";
 import type { Platform, Chain } from "../content/platform-matrix.js";
 
@@ -23,6 +23,9 @@ export async function handleSearchDocs(args: {
     return true;
   });
 
+  // Fall back to local registry when Algolia returns nothing (network error or no hits)
+  const localDocs = uniqueDocs.length === 0 ? searchDocs(query) : [];
+
   // ── Example search ─────────────────────────────────────────────────────
   const terms = query.toLowerCase().split(/\s+/);
   const allExamples = findExamples({ platform, chain, category });
@@ -34,7 +37,7 @@ export async function handleSearchDocs(args: {
     .slice(0, 8);
 
   // ── Format output ──────────────────────────────────────────────────────
-  if (uniqueDocs.length === 0 && matchingExamples.length === 0) {
+  if (uniqueDocs.length === 0 && localDocs.length === 0 && matchingExamples.length === 0) {
     return [
       `No results found for "${query}".`,
       "",
@@ -52,6 +55,13 @@ export async function handleSearchDocs(args: {
       if (doc.hierarchy) sections.push(`*${doc.hierarchy}*`);
       sections.push(`URL: ${doc.url}`);
       if (doc.snippet) sections.push(doc.snippet);
+      sections.push("");
+    }
+  } else if (localDocs.length > 0) {
+    sections.push("## Documentation (local index)\n");
+    for (const doc of localDocs.slice(0, 10)) {
+      sections.push(`### ${doc.title}`);
+      sections.push(`URL: ${doc.url}`);
       sections.push("");
     }
   }

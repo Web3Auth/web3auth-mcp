@@ -1,6 +1,6 @@
 import { findExamples, getExampleGitHubUrl, type ExampleEntry } from "../content/registry.js";
 import { fetchExampleFull } from "../fetcher/github-fetcher.js";
-import type { Platform, Chain } from "../content/platform-matrix.js";
+import { getPlatformRecommendation, type Platform, type Chain } from "../content/platform-matrix.js";
 
 export async function handleGetExample(args: {
   name?: string;
@@ -49,6 +49,10 @@ export async function handleGetExample(args: {
   }
 
   const githubUrl = getExampleGitHubUrl(example);
+  const { warnings } = chain
+    ? getPlatformRecommendation(example.platform, chain)
+    : getPlatformRecommendation(example.platform, example.chain ?? "evm");
+
   const sections: string[] = [
     `# Example: ${example.name}`,
     "",
@@ -58,6 +62,9 @@ export async function handleGetExample(args: {
     example.chain ? `**Chain**: ${example.chain}` : "",
     example.authMethod ? `**Auth Method**: ${example.authMethod}` : "",
     "",
+    ...(warnings.length > 0
+      ? ["**Platform Notes:**", ...warnings.map((w) => `- ${w}`), ""]
+      : []),
     "---",
     "",
   ].filter((l) => l !== undefined);

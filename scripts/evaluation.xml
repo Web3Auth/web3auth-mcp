@@ -1,0 +1,208 @@
+<evaluation>
+  <!--
+    Web3Auth MCP Server Evaluation Suite
+    20 integration-focused questions simulating real developer scenarios.
+    Each answer is verifiable by string comparison and stable over time.
+    Questions test the SKILL decision workflow and require MCP tool usage.
+  -->
+
+  <qa_pair>
+    <question>
+      A developer is setting up Web3Auth with Wagmi in a React app. Using the MCP tools,
+      fetch the React Quick Start example and examine the entry point (main.tsx). List the
+      three wrapper provider components from outermost to innermost that are required for
+      the Wagmi integration to work.
+    </question>
+    <answer>Web3AuthProvider, QueryClientProvider, WagmiProvider</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>
+      A developer built their app on Sapphire Devnet and is deploying to production using
+      Sapphire Mainnet. Their beta testers report completely different wallet addresses.
+      According to the SKILL's Key Derivation Rules, which THREE configuration parameters,
+      if changed, will permanently produce a different wallet address? List them in the
+      order they appear in the Key Derivation Rules section.
+    </question>
+    <answer>Client ID, Sapphire network, connection configuration</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>
+      After adding @web3auth/modal to a Vite project, a developer gets "global is not defined"
+      errors in the browser console. Using the MCP tools, fetch the React Quick Start example
+      and examine vite.config.ts. What value is the `global` key set to under the `define`
+      option to fix this error?
+    </question>
+    <answer>globalThis</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>
+      A developer's app supports both Google login and Email Passwordless. Users who sign up
+      with Google and later try Email Passwordless get a different wallet with no funds.
+      Using the MCP tools, search the documentation for "grouped connections". What must be
+      true about the user identifier fields across the sub-connections being grouped for
+      the same user to get the same wallet address?
+    </question>
+    <answer>The user identifier fields must be compatible (the same value) across sub-connections so the same user gets the same wallet address</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>
+      Users on Safari report that clicking the social login button shows an infinite loader
+      instead of the login popup. Using search_community, fetch the archived discussion at
+      topic_id 1775. What UX mode does the community recommend using instead of popup mode
+      to work around Safari's default popup blocking behavior?
+    </question>
+    <answer>redirect</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>
+      A React Native developer using Expo asks whether they can use Expo Go for testing
+      their Web3Auth integration. According to the Platform Quick Reference in the SKILL
+      and the React Native SDK documentation, what is the correct answer, and what
+      alternative does the documentation recommend instead of Expo Go?
+    </question>
+    <answer>Expo Go is not supported; use a Custom Dev Client or EAS build</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>
+      A developer set up custom JWT authentication with Firebase. Login works locally but
+      intermittently fails in production despite a valid `exp` claim set to 1 hour. According
+      to the SKILL and documentation, what specific JWT claim has a strict time constraint
+      that could cause this, and within how many seconds of the current server time must it be?
+    </question>
+    <answer>iat (issued-at) must be within 60 seconds</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>
+      A developer wants to use Web3Auth for server-side wallet operations in a Node.js
+      backend (e.g. AI agents, automated transactions). Using the MCP tools and SKILL,
+      what type of authentication does the Node.js SDK exclusively require, and what is the
+      custody model implication since key reconstruction happens on the backend?
+    </question>
+    <answer>Custom authentication only (JWT required); custodial to the dApp, non-custodial to Web3Auth</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>
+      A React developer is using the standard `useConnect` and `useAccount` hooks from wagmi
+      to manage Web3Auth login state, but `isConnected` is unreliable — sometimes showing
+      disconnected even when the user is logged in. Using the MCP tools, fetch the React
+      Quick Start example. What Web3Auth-specific hook does the example use instead for
+      managing connection state?
+    </question>
+    <answer>useWeb3AuthConnect</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>
+      A developer is building a Next.js App Router project. They add the Web3AuthProvider
+      directly in their root layout.tsx but get a server component error because layout.tsx
+      is a server component by default. According to the SKILL's Platform Quick Reference
+      for React / Next.js, what must the Web3AuthProvider be placed inside to work with
+      App Router?
+    </question>
+    <answer>A "use client" component</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>
+      A developer switches their Web3Auth config from Sapphire Devnet to Sapphire Mainnet
+      for production, but continues testing on localhost. Social login silently fails with
+      no clear error. According to the SKILL's Key Derivation Rules, why does login fail
+      on localhost with Sapphire Mainnet?
+    </question>
+    <answer>Sapphire Mainnet does not allow localhost; use Devnet for local development</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>
+      A developer adds `useSFAKey: true` to their existing production Web3Auth configuration
+      to enable wallet pregeneration. After deploying, all users report their wallets are
+      empty and their funds are gone. According to the SKILL, why did this happen?
+    </question>
+    <answer>Toggling useSFAKey in production permanently changes all existing user wallet addresses</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>
+      A Flutter developer is integrating Web3Auth and needs to understand the SDK's
+      initialization flow before calling login. Using get_sdk_reference for the Flutter
+      platform with focus "main-class", find the Web3AuthFlutter class. What are the two
+      static methods that must be called before login — one to set up the SDK configuration
+      and one to restore an existing session? List them in the order they should be called.
+    </question>
+    <answer>init, initialize</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>
+      A developer is building a Nuxt app with Web3Auth. The app crashes on the server
+      because Web3Auth requires browser APIs that don't exist in SSR. According to the
+      SKILL's Platform Quick Reference for Vue / Nuxt, what configuration must be added
+      to the Nuxt plugin to prevent server-side rendering of Web3Auth?
+    </question>
+    <answer>ssr: false</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>
+      A developer wants to change the branding, colors, and logo of the Web3Auth modal to
+      match their product. They are about to write a `whiteLabel` config object in code.
+      Using the MCP tools, fetch the whitelabel documentation page at
+      https://docs.metamask.io/embedded-wallets/sdk/react/advanced/whitelabel/ and identify
+      where basic modal appearance should first be configured before touching code.
+    </question>
+    <answer>Directly on the dashboard</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>
+      A developer wants to enable Wallet Services (fiat on-ramp, swaps, WalletConnect
+      interoperability) for their users. They start writing a `walletServicesConfig` object
+      in code. Using the MCP tools, fetch the Wallet Services documentation at
+      https://docs.metamask.io/embedded-wallets/sdk/react/advanced/wallet-services/ and
+      identify the recommended primary way to configure Wallet Services without writing
+      any code.
+    </question>
+    <answer>Through the Embedded Wallets dashboard; manual SDK configuration is optional</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>
+      A developer is upgrading their app from an older Web3Auth integration (previously
+      known as Plug and Play / PnP or Core Kit). According to the SKILL, what are the
+      old product names that are now deprecated, and what is the single unified name all
+      SDKs now fall under?
+    </question>
+    <answer>PnP, Core Kit, Torus are deprecated; everything is now MetaMask Embedded Wallets</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>
+      A developer working on an Android app finds example repos described as "aggregate
+      verifier" examples, but the Web dashboard and React documentation only use the term
+      "grouped connections". Using the MCP tools, search for examples with auth_method
+      "grouped" for Android and confirm: are "aggregate verifier" and "grouped connections"
+      the same feature, just named differently across platforms?
+    </question>
+    <answer>Yes, aggregate verifier and grouped connections are the same feature</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>
+      A developer reading older Web3Auth documentation sees the term "verifier" used for
+      setting up Google login or Firebase auth. The new dashboard now shows "connections"
+      instead. According to the SKILL's Authentication Concepts section, what is the
+      current name for what was previously called a "verifier", and what are the two
+      identifiers it exposes that the old docs called "verifier ID" and "verifier name"?
+    </question>
+    <answer>Connections (formerly verifiers); Auth Connection ID or name of the connection (verifier ID/ name)l and JWT user identifier field is user id</answer>
+  </qa_pair>
+
+</evaluation>

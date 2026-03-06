@@ -61,10 +61,8 @@ export async function searchAlgolia(
     highlightPostTag: "",
   };
 
-  if (opts.filterEmbeddedWallets) {
-    body.filters = 'url:"https://docs.metamask.io/embedded-wallets"';
-    body.facetFilters = [["url:https://docs.metamask.io/embedded-wallets*"]];
-  }
+  // Note: url is not a facetable/filterable attribute in this index.
+  // formatAlgoliaHits handles embedded-wallets URL filtering in JS.
 
   try {
     const response = await fetch(`${ALGOLIA_HOST}/1/indexes/${ALGOLIA_INDEX}/query`, {
@@ -128,6 +126,10 @@ export async function fetchDocPageFromAlgolia(url: string): Promise<string | nul
   if (cached) return cached;
 
   try {
+    // url is not a filterable attribute in this index, so we search by path segment
+    // and post-filter by url_without_anchor in JS.
+    const pathQuery = normalised.replace(/^https?:\/\/[^/]+\//, "").replace(/\/$/, "");
+
     const response = await fetch(`${ALGOLIA_HOST}/1/indexes/${ALGOLIA_INDEX}/query`, {
       method: "POST",
       headers: {
@@ -137,21 +139,24 @@ export async function fetchDocPageFromAlgolia(url: string): Promise<string | nul
         "User-Agent": "Web3Auth-MCP-Server/2.0",
       },
       body: JSON.stringify({
-        query: "",
+        query: pathQuery,
         hitsPerPage: 100,
-        filters: `url:"${normalised.replace(/"/g, '\\"')}"`,
-        attributesToRetrieve: ["objectID", "url", "title", "content", "hierarchy", "type", "anchor"],
+        attributesToRetrieve: ["objectID", "url", "url_without_anchor", "title", "content", "hierarchy", "type", "anchor"],
       }),
       signal: AbortSignal.timeout(API_TIMEOUT_MS),
     });
 
     if (!response.ok) return null;
 
-    const data = (await response.json()) as { hits: AlgoliaHit[] };
-    if (!data.hits.length) return null;
+    const data = (await response.json()) as { hits: Array<AlgoliaHit & { url_without_anchor?: string }> };
+    // Filter to only hits whose URL matches this specific page
+    const pageHits = data.hits.filter(
+      (h) => (h.url_without_anchor ?? h.url ?? "").replace(/\/?$/, "/") === normalised,
+    );
+    if (!pageHits.length) return null;
 
     // Sort hits by type (lvl0 -> lvl1 -> ... -> content) and reconstruct page
-    const ordered = data.hits.sort((a, b) => {
+    const ordered = pageHits.sort((a, b) => {
       const typeOrder = ["lvl0", "lvl1", "lvl2", "lvl3", "lvl4", "lvl5", "content"];
       return typeOrder.indexOf(a.type ?? "content") - typeOrder.indexOf(b.type ?? "content");
     });

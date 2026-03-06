@@ -3,6 +3,8 @@
  * Keeps tool definitions DRY.
  */
 import { z } from "zod";
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
 import { handleSearchDocs } from "./search-docs.js";
 import { handleGetDoc } from "./get-doc.js";
 import { handleGetExample } from "./get-example.js";
@@ -19,12 +21,13 @@ const CHAINS = ["evm", "solana", "other"] as const;
 const CATEGORIES = ["quick-start", "custom-auth", "blockchain", "feature", "playground"] as const;
 const SDK_FOCUSES = ["types", "hooks", "main-class", "errors", "all"] as const;
 
+const READ_ONLY: ToolAnnotations = { readOnlyHint: true };
+
 /** Register all MCP tools on a server instance. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function registerTools(server: any): void {
+export function registerTools(server: McpServer): void {
 
   // ── search_docs ──────────────────────────────────────────────────────────
-  (server as any).tool(
+  server.tool(
     "search_docs",
     "Search MetaMask Embedded Wallets (Web3Auth) documentation and examples. Use for SDK discovery, feature lookup, and finding relevant examples. Returns doc page links with snippets and matching example projects.",
     {
@@ -33,6 +36,7 @@ export function registerTools(server: any): void {
       chain: z.enum(CHAINS).optional().describe("Filter examples by blockchain family"),
       category: z.enum(CATEGORIES).optional().describe("Filter examples by category"),
     },
+    READ_ONLY,
     async (args: { query: string; platform?: string; chain?: string; category?: string }) => {
       const result = await handleSearchDocs({
         query: args.query,
@@ -45,12 +49,13 @@ export function registerTools(server: any): void {
   );
 
   // ── get_doc ──────────────────────────────────────────────────────────────
-  (server as any).tool(
+  server.tool(
     "get_doc",
     "Fetch the full content of a MetaMask Embedded Wallets documentation page. Use after search_docs to read the actual doc. Tries Algolia, then llms.txt, then GitHub raw MDX as fallbacks.",
     {
       url: z.string().describe("A docs.metamask.io URL, e.g. https://docs.metamask.io/embedded-wallets/sdk/react/"),
     },
+    READ_ONLY,
     async (args: { url: string }) => {
       const result = await handleGetDoc({ url: args.url });
       return { content: [{ type: "text" as const, text: result }] };
@@ -58,7 +63,7 @@ export function registerTools(server: any): void {
   );
 
   // ── get_example ──────────────────────────────────────────────────────────
-  (server as any).tool(
+  server.tool(
     "get_example",
     "Fetch the complete source code of a Web3Auth integration example from GitHub. Returns all source files needed to understand how the integration works. Examples are the PRIMARY reference for integration patterns — always prefer example code over raw SDK source.",
     {
@@ -68,6 +73,7 @@ export function registerTools(server: any): void {
       category: z.enum(CATEGORIES).optional().describe("Filter by category"),
       auth_method: z.string().optional().describe("Filter by auth method, e.g. 'auth0', 'firebase', 'google', 'grouped'"),
     },
+    READ_ONLY,
     async (args: { name?: string; platform?: string; chain?: string; category?: string; auth_method?: string }) => {
       const result = await handleGetExample({
         name: args.name,
@@ -81,7 +87,7 @@ export function registerTools(server: any): void {
   );
 
   // ── get_sdk_reference ────────────────────────────────────────────────────
-  (server as any).tool(
+  server.tool(
     "get_sdk_reference",
     "Fetch SDK source code (type definitions, interfaces, hooks) from the open-source Web3Auth SDK repos. Use for REFERENCE and DEBUGGING only — to verify exact type shapes, constructor signatures, available hooks, and error types. Do NOT use this to discover features; many SDK options are internal or legacy. Always use get_example first for integration patterns.",
     {
@@ -96,6 +102,7 @@ export function registerTools(server: any): void {
         "'main-class' = SDK implementation. 'all' = everything.",
       ),
     },
+    READ_ONLY,
     async (args: { platform: string; module?: string; focus?: string }) => {
       const result = await handleGetSdkReference({
         platform: args.platform as Platform,
@@ -107,13 +114,14 @@ export function registerTools(server: any): void {
   );
 
   // ── search_community ─────────────────────────────────────────────────────
-  (server as any).tool(
+  server.tool(
     "search_community",
     "Search or fetch posts from the MetaMask Embedded Wallets community forum (builder.metamask.io). Use for troubleshooting real user issues, finding workarounds, and checking if an issue is known. Provide a query to search or a topic_id to read the full discussion.",
     {
       query: z.string().optional().describe("Search query, e.g. 'popup blocked safari', 'JWT error', 'Android unstable connection'"),
       topic_id: z.number().int().optional().describe("Discourse topic ID to fetch the full discussion thread"),
     },
+    READ_ONLY,
     async (args: { query?: string; topic_id?: number }) => {
       const result = await handleSearchCommunity({
         query: args.query,
