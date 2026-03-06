@@ -82,7 +82,7 @@ User needs to verify a type signature, debug an SDK error, or check exact API sh
 MetaMask Embedded Wallets (formerly Web3Auth Plug and Play) provides **non-custodial social login wallets** using Shamir Secret Sharing (SSS).
 
 - Users authenticate with OAuth (Google, Facebook, etc.) or custom JWT. Their private key is derived from multiple key shares — one held by the user's device, one by Web3Auth nodes (further divided by another SSS into a network of nodes distributed globally), and optionally a third or more depending on MFA factors. 
-- If no MFA is there, one share is help by Web3Auth nodes, another is stored encrypted on Web3Auth Metadata store via user's unique auth id.
+- If no MFA is there, one share is held by Web3Auth nodes, another is stored encrypted on Web3Auth Metadata store via user's unique auth id.
 - It is a 2 step shamir secret sharing. No single party (including Web3Auth / MetaMask) holds the full key. It is fully non-custodial.
 - The wallet address is deterministic: same user + same config = same wallet every time. Configurations can change keys, better to refer to docs if changing anything.
 - Old product names (PnP, Core Kit, Torus) are deprecated. Everything is now "MetaMask Embedded Wallets."
