@@ -21,7 +21,13 @@ const CHAINS = ["evm", "solana", "other"] as const;
 const CATEGORIES = ["quick-start", "custom-auth", "blockchain", "feature", "playground"] as const;
 const SDK_FOCUSES = ["types", "hooks", "main-class", "errors", "all"] as const;
 
-const READ_ONLY: ToolAnnotations = { readOnlyHint: true };
+const READ_ONLY: ToolAnnotations = {
+  readOnlyHint: true,
+  // All tools are idempotent (same inputs produce equivalent results) and
+  // interact with external services (Algolia, GitHub, Discourse).
+  idempotentHint: true,
+  openWorldHint: true,
+};
 
 /** Register all MCP tools on a server instance. */
 export function registerTools(server: McpServer): void {
@@ -44,7 +50,7 @@ export function registerTools(server: McpServer): void {
         chain: args.chain as Chain | undefined,
         category: args.category as "quick-start" | "custom-auth" | "blockchain" | "feature" | "playground" | undefined,
       });
-      return { content: [{ type: "text" as const, text: result }] };
+      return { isError: result.isError, content: [{ type: "text" as const, text: result.text }] };
     },
   );
 
@@ -58,7 +64,7 @@ export function registerTools(server: McpServer): void {
     READ_ONLY,
     async (args: { url: string }) => {
       const result = await handleGetDoc({ url: args.url });
-      return { content: [{ type: "text" as const, text: result }] };
+      return { isError: result.isError, content: [{ type: "text" as const, text: result.text }] };
     },
   );
 
@@ -82,7 +88,7 @@ export function registerTools(server: McpServer): void {
         category: args.category as "quick-start" | "custom-auth" | "blockchain" | "feature" | "playground" | undefined,
         auth_method: args.auth_method,
       });
-      return { content: [{ type: "text" as const, text: result }] };
+      return { isError: result.isError, content: [{ type: "text" as const, text: result.text }] };
     },
   );
 
@@ -109,7 +115,7 @@ export function registerTools(server: McpServer): void {
         module: args.module,
         focus: args.focus,
       });
-      return { content: [{ type: "text" as const, text: result }] };
+      return { isError: result.isError, content: [{ type: "text" as const, text: result.text }] };
     },
   );
 
@@ -127,7 +133,7 @@ export function registerTools(server: McpServer): void {
         query: args.query,
         topic_id: args.topic_id,
       });
-      return { content: [{ type: "text" as const, text: result }] };
+      return { isError: result.isError, content: [{ type: "text" as const, text: result.text }] };
     },
   );
 }

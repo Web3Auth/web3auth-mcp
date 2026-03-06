@@ -1,6 +1,7 @@
 import { findExamples, getExampleGitHubUrl, type ExampleEntry } from "../content/registry.js";
 import { fetchExampleFull } from "../fetcher/github-fetcher.js";
 import { getPlatformRecommendation, type Platform, type Chain } from "../content/platform-matrix.js";
+import type { ToolResult } from "./types.js";
 
 export async function handleGetExample(args: {
   name?: string;
@@ -8,7 +9,7 @@ export async function handleGetExample(args: {
   chain?: Chain;
   category?: "quick-start" | "custom-auth" | "blockchain" | "feature" | "playground";
   auth_method?: string;
-}): Promise<string> {
+}): Promise<ToolResult> {
   const { name, platform, chain, category, auth_method } = args;
 
   // Find the matching example from registry
@@ -41,11 +42,14 @@ export async function handleGetExample(args: {
 
   if (!example) {
     const filters = [platform, chain, category, auth_method].filter(Boolean).join(", ");
-    return [
-      `No example found${filters ? ` for: ${filters}` : ""}.`,
-      "",
-      "Use search_docs to find available examples.",
-    ].join("\n");
+    return {
+      text: [
+        `No example found${filters ? ` for: ${filters}` : ""}.`,
+        "",
+        "Use search_docs to find available examples.",
+      ].join("\n"),
+      isError: true,
+    };
   }
 
   const githubUrl = getExampleGitHubUrl(example);
@@ -74,7 +78,7 @@ export async function handleGetExample(args: {
     const files = await fetchExampleFull(example.owner, example.repo, example.path);
 
     if (!files.length) {
-      return [...sections, "Could not fetch example files. Visit the GitHub URL directly."].join("\n");
+      return { text: [...sections, "Could not fetch example files. Visit the GitHub URL directly."].join("\n") };
     }
 
     sections.push(`## Source Files (${files.length} files)\n`);
@@ -96,7 +100,7 @@ export async function handleGetExample(args: {
     sections.push(`Visit directly: ${githubUrl}`);
   }
 
-  return sections.join("\n");
+  return { text: sections.join("\n") };
 }
 
 function sortFiles(files: Array<{ relativePath: string; content: string }>): typeof files {

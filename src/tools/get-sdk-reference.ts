@@ -2,6 +2,7 @@ import { SDK_SOURCE_REGISTRY, getSdkRegistryKeys, getSdkLanguageId } from "../co
 import { PLATFORM_MATRIX, type Platform } from "../content/platform-matrix.js";
 import { fetchSdkModule, type SdkFileResult } from "../fetcher/github-fetcher.js";
 import type { FilePurpose, SdkModule } from "../content/sdk-registry.js";
+import type { ToolResult } from "./types.js";
 
 const MAX_RESPONSE_BYTES = 80_000;
 
@@ -9,10 +10,10 @@ export async function handleGetSdkReference(args: {
   platform: Platform;
   module?: string;
   focus?: string;
-}): Promise<string> {
+}): Promise<ToolResult> {
   const registryKeys = getSdkRegistryKeys(args.platform);
   if (!registryKeys.length) {
-    return `No SDK source registry configured for platform: ${args.platform}`;
+    return { text: `No SDK source registry configured for platform: ${args.platform}`, isError: true };
   }
 
   const focus = (args.focus ?? "types") as FilePurpose | "all";
@@ -47,7 +48,10 @@ export async function handleGetSdkReference(args: {
       const found = config.modules.filter((m) => m.id === args.module);
       if (!found.length) {
         const available = config.modules.map((m) => `  - \`${m.id}\`: ${m.label}`).join("\n");
-        return `Module "${args.module}" not found for ${caps.displayName}.\n\nAvailable modules:\n${available}`;
+        return {
+          text: `Module "${args.module}" not found for ${caps.displayName}.\n\nAvailable modules:\n${available}`,
+          isError: true,
+        };
       }
       modules = found;
     } else {
@@ -99,7 +103,7 @@ export async function handleGetSdkReference(args: {
     }
   }
 
-  return sections.join("\n");
+  return { text: sections.join("\n") };
 }
 
 /** Select which modules to fetch based on focus and platform. */

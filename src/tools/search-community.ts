@@ -1,18 +1,19 @@
 import { searchCommunity, fetchCommunityTopic } from "../fetcher/community-fetcher.js";
+import type { ToolResult } from "./types.js";
 
 const DISCOURSE_BASE = "https://builder.metamask.io";
 
 export async function handleSearchCommunity(args: {
   query?: string;
   topic_id?: number;
-}): Promise<string> {
+}): Promise<ToolResult> {
   const { query, topic_id } = args;
 
   // ── Fetch full topic ──────────────────────────────────────────────────
   if (topic_id !== undefined) {
     const topic = await fetchCommunityTopic(topic_id);
     if (!topic) {
-      return `Could not fetch topic ${topic_id}. It may not exist or may be private.`;
+      return { text: `Could not fetch topic ${topic_id}. It may not exist or may be private.` };
     }
 
     const lines: string[] = [
@@ -38,22 +39,24 @@ export async function handleSearchCommunity(args: {
       lines.push("");
     }
 
-    return lines.join("\n");
+    return { text: lines.join("\n") };
   }
 
   // ── Search ────────────────────────────────────────────────────────────
   if (!query) {
-    return "Please provide either a query to search or a topic_id to fetch.";
+    return { text: "Please provide either a query to search or a topic_id to fetch.", isError: true };
   }
 
   const topics = await searchCommunity(query);
 
   if (!topics.length) {
-    return [
-      `No community posts found for "${query}".`,
-      "",
-      `Search the forum directly: ${DISCOURSE_BASE}/c/embedded-wallets/5`,
-    ].join("\n");
+    return {
+      text: [
+        `No community posts found for "${query}".`,
+        "",
+        `Search the forum directly: ${DISCOURSE_BASE}/c/embedded-wallets/5`,
+      ].join("\n"),
+    };
   }
 
   const lines: string[] = [
@@ -75,5 +78,5 @@ export async function handleSearchCommunity(args: {
     lines.push("");
   }
 
-  return lines.join("\n");
+  return { text: lines.join("\n") };
 }

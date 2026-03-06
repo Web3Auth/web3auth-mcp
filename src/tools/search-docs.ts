@@ -1,13 +1,14 @@
 import { findExamples, getExampleGitHubUrl, searchDocs, type ExampleEntry } from "../content/registry.js";
 import { searchAlgolia, formatAlgoliaHits } from "../fetcher/algolia-fetcher.js";
 import type { Platform, Chain } from "../content/platform-matrix.js";
+import type { ToolResult } from "./types.js";
 
 export async function handleSearchDocs(args: {
   query: string;
   platform?: Platform;
   chain?: Chain;
   category?: "quick-start" | "custom-auth" | "blockchain" | "feature" | "playground";
-}): Promise<string> {
+}): Promise<ToolResult> {
   const { query, platform, chain, category } = args;
   const sections: string[] = [];
 
@@ -38,14 +39,16 @@ export async function handleSearchDocs(args: {
 
   // ── Format output ──────────────────────────────────────────────────────
   if (uniqueDocs.length === 0 && localDocs.length === 0 && matchingExamples.length === 0) {
-    return [
-      `No results found for "${query}".`,
-      "",
-      "Try:",
-      "- Using different keywords (e.g. platform name, feature, error message)",
-      "- Full docs: https://docs.metamask.io/embedded-wallets/",
-      "- Community forum: https://builder.metamask.io/c/embedded-wallets/5",
-    ].join("\n");
+    return {
+      text: [
+        `No results found for "${query}".`,
+        "",
+        "Try:",
+        "- Using different keywords (e.g. platform name, feature, error message)",
+        "- Full docs: https://docs.metamask.io/embedded-wallets/",
+        "- Community forum: https://builder.metamask.io/c/embedded-wallets/5",
+      ].join("\n"),
+    };
   }
 
   if (uniqueDocs.length > 0) {
@@ -78,5 +81,5 @@ export async function handleSearchDocs(args: {
     }
   }
 
-  return sections.join("\n");
+  return { text: sections.join("\n") };
 }

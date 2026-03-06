@@ -8,6 +8,7 @@ import { handleGetSdkReference } from "./tools/get-sdk-reference.js";
 import { handleSearchCommunity } from "./tools/search-community.js";
 import { startMcpServer } from "./index.js";
 import type { Platform, Chain } from "./content/platform-matrix.js";
+import type { ToolResult } from "./tools/types.js";
 
 const PLATFORMS = ["react", "vue", "js", "react-native", "android", "ios", "flutter", "unity", "unreal", "node"] as const;
 const CHAINS = ["evm", "solana", "other"] as const;
@@ -24,9 +25,18 @@ function output(text: string, json: boolean): void {
   }
 }
 
-function run(fn: () => Promise<string>, json: boolean): void {
+function run(fn: () => Promise<ToolResult>, json: boolean): void {
   fn().then((result) => {
-    output(result, json);
+    if (result.isError) {
+      if (json) {
+        process.stderr.write(JSON.stringify({ error: result.text }) + "\n");
+      } else {
+        process.stderr.write(result.text + "\n");
+      }
+      process.exit(1);
+    } else {
+      output(result.text, json);
+    }
   }).catch((err: unknown) => {
     const msg = err instanceof Error ? err.message : String(err);
     if (json) {

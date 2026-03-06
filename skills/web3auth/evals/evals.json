@@ -1,0 +1,230 @@
+{
+  "skill_name": "web3auth",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "A developer is setting up Web3Auth with Wagmi in a React app. Using the MCP tools, fetch the React Quick Start example and examine the entry point (main.tsx). List the three wrapper provider components from outermost to innermost that are required for the Wagmi integration to work.",
+      "expected_output": "The answer lists Web3AuthProvider, QueryClientProvider, WagmiProvider in that outermost-to-innermost order, obtained by fetching the React Quick Start example with get_example.",
+      "files": [],
+      "expectations": [
+        "The answer uses get_example to fetch the React Quick Start example",
+        "The answer identifies Web3AuthProvider as the outermost provider",
+        "The answer identifies WagmiProvider as the innermost provider",
+        "The answer lists all three providers: Web3AuthProvider, QueryClientProvider, WagmiProvider"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "A developer built their app on Sapphire Devnet and is deploying to production using Sapphire Mainnet. Their beta testers report completely different wallet addresses. According to the SKILL's Key Derivation Rules, which THREE configuration parameters, if changed, will permanently produce a different wallet address? List them in the order they appear in the Key Derivation Rules section.",
+      "expected_output": "Client ID, Sapphire network, connection configuration — in that order as listed in the Key Derivation Rules section.",
+      "files": [],
+      "expectations": [
+        "The answer identifies Client ID as the first key derivation parameter",
+        "The answer identifies Sapphire network as the second key derivation parameter",
+        "The answer identifies connection configuration (verifier/connection id) as the third parameter",
+        "The answer explains that changing any of these produces a different wallet address permanently"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "After adding @web3auth/modal to a Vite project, a developer gets 'global is not defined' errors in the browser console. Using the MCP tools, fetch the React Quick Start example and examine vite.config.ts. What value is the `global` key set to under the `define` option to fix this error?",
+      "expected_output": "globalThis — found in vite.config.ts under the define option.",
+      "files": [],
+      "expectations": [
+        "The answer uses get_example to fetch the React Quick Start example",
+        "The answer identifies globalThis as the value for the global define option",
+        "The answer references vite.config.ts as the source"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "A developer's app supports both Google login and Email Passwordless. Users who sign up with Google and later try Email Passwordless get a different wallet with no funds. Using the MCP tools, search the documentation for 'grouped connections'. What must be true about the user identifier fields across the sub-connections being grouped for the same user to get the same wallet address?",
+      "expected_output": "The user identifier fields must be compatible (return the same value) across sub-connections so the same user resolves to the same identity.",
+      "files": [],
+      "expectations": [
+        "The answer uses search_docs or get_doc to fetch grouped connections documentation",
+        "The answer explains that user identifier fields must be compatible (same value) across sub-connections",
+        "The answer explains that without grouped connections, Google and Email Passwordless produce different wallets"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Users on Safari report that clicking the social login button shows an infinite loader instead of the login popup. Using search_community, fetch the archived discussion at topic_id 1775. What UX mode does the community recommend using instead of popup mode to work around Safari's default popup blocking behavior?",
+      "expected_output": "redirect mode — the community recommends switching to redirect UX mode to avoid Safari popup blocking.",
+      "files": [],
+      "expectations": [
+        "The answer uses search_community with topic_id 1775",
+        "The answer identifies redirect mode as the recommended workaround",
+        "The answer explains that Safari blocks popups by default, causing the infinite loader"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "A React Native developer using Expo asks whether they can use Expo Go for testing their Web3Auth integration. According to the Platform Quick Reference in the SKILL and the React Native SDK documentation, what is the correct answer, and what alternative does the documentation recommend instead of Expo Go?",
+      "expected_output": "Expo Go is not supported because it cannot run the required Web3Auth polyfills. The alternative is a Custom Dev Client or EAS build.",
+      "files": [],
+      "expectations": [
+        "The answer clearly states that Expo Go is not supported for Web3Auth",
+        "The answer recommends Custom Dev Client or EAS build as the alternative",
+        "The answer references the polyfill incompatibility as the reason"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "A developer set up custom JWT authentication with Firebase. Login works locally but intermittently fails in production despite a valid `exp` claim set to 1 hour. According to the SKILL and documentation, what specific JWT claim has a strict time constraint that could cause this, and within how many seconds of the current server time must it be?",
+      "expected_output": "The iat (issued-at) claim must be within 60 seconds of the current server time, regardless of the exp claim.",
+      "files": [],
+      "expectations": [
+        "The answer identifies the iat (issued-at) claim as the problematic constraint",
+        "The answer states the 60-second time window requirement",
+        "The answer clarifies this is independent of the exp claim",
+        "The answer recommends issuing a fresh JWT on every login attempt"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "A developer wants to use Web3Auth for server-side wallet operations in a Node.js backend (e.g. AI agents, automated transactions). Using the MCP tools and SKILL, what type of authentication does the Node.js SDK exclusively require, and what is the custody model implication since key reconstruction happens on the backend?",
+      "expected_output": "The Node.js SDK requires custom authentication only (a JWT is mandatory — no social login UI). Key reconstruction on the dApp backend makes it custodial to the dApp but non-custodial to Web3Auth.",
+      "files": [],
+      "expectations": [
+        "The answer states that Node.js SDK requires custom authentication (JWT) only",
+        "The answer explains there is no social login UI support for Node.js",
+        "The answer explains the custody model: custodial to the dApp, non-custodial to Web3Auth"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "A React developer is using the standard `useConnect` and `useAccount` hooks from wagmi to manage Web3Auth login state, but `isConnected` is unreliable — sometimes showing disconnected even when the user is logged in. Using the MCP tools, fetch the React Quick Start example. What Web3Auth-specific hook does the example use instead for managing connection state?",
+      "expected_output": "useWeb3AuthConnect — the Web3Auth-specific hook that correctly reflects Web3Auth connection state, found in the React Quick Start example.",
+      "files": [],
+      "expectations": [
+        "The answer uses get_example to fetch the React Quick Start example",
+        "The answer identifies useWeb3AuthConnect as the replacement hook",
+        "The answer explains that generic Wagmi hooks miss Web3Auth-specific connection state"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "A developer is building a Next.js App Router project. They add the Web3AuthProvider directly in their root layout.tsx but get a server component error because layout.tsx is a server component by default. According to the SKILL's Platform Quick Reference for React / Next.js, what must the Web3AuthProvider be placed inside to work with App Router?",
+      "expected_output": "A 'use client' component — the Web3AuthProvider must be inside a client component to work with Next.js App Router.",
+      "files": [],
+      "expectations": [
+        "The answer states the Web3AuthProvider must be in a 'use client' component",
+        "The answer explains that Next.js App Router layout.tsx is a server component by default",
+        "The answer reads either references/platforms.md or search_docs for the React/Next.js guidance"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "A developer switches their Web3Auth config from Sapphire Devnet to Sapphire Mainnet for production, but continues testing on localhost. Social login silently fails with no clear error. According to the SKILL's Key Derivation Rules, why does login fail on localhost with Sapphire Mainnet?",
+      "expected_output": "Sapphire Mainnet does not allow localhost. Developers must use Sapphire Devnet for local development.",
+      "files": [],
+      "expectations": [
+        "The answer states that Sapphire Mainnet does not allow localhost",
+        "The answer recommends using Sapphire Devnet for local development",
+        "The answer does not confuse Sapphire Devnet/Mainnet with blockchain network Devnet/Mainnet"
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "A developer adds `useSFAKey: true` to their existing production Web3Auth configuration to enable wallet pregeneration. After deploying, all users report their wallets are empty and their funds are gone. According to the SKILL, why did this happen?",
+      "expected_output": "Toggling useSFAKey (or useCoreKitKey) in a production configuration permanently changes all existing user wallet addresses, causing users to appear to have empty wallets.",
+      "files": [],
+      "expectations": [
+        "The answer explains that toggling useSFAKey changes all existing user wallet addresses",
+        "The answer warns this is a permanent change that cannot be undone",
+        "The answer identifies this as the cause of the 'empty wallets' symptom"
+      ]
+    },
+    {
+      "id": 13,
+      "prompt": "A Flutter developer is integrating Web3Auth and needs to understand the SDK's initialization flow before calling login. Using get_sdk_reference for the Flutter platform with focus 'main-class', find the Web3AuthFlutter class. What are the two static methods that must be called before login — one to set up the SDK configuration and one to restore an existing session? List them in the order they should be called.",
+      "expected_output": "init (sets up SDK configuration) then initialize (restores existing session) — in that order.",
+      "files": [],
+      "expectations": [
+        "The answer uses get_sdk_reference with platform='flutter' and focus='main-class'",
+        "The answer identifies init as the first method to call",
+        "The answer identifies initialize as the second method to call",
+        "The answer explains init sets up config and initialize restores sessions"
+      ]
+    },
+    {
+      "id": 14,
+      "prompt": "A developer is building a Nuxt app with Web3Auth. The app crashes on the server because Web3Auth requires browser APIs that don't exist in SSR. According to the SKILL's Platform Quick Reference for Vue / Nuxt, what configuration must be added to the Nuxt plugin to prevent server-side rendering of Web3Auth?",
+      "expected_output": "ssr: false — added to the Nuxt plugin to disable server-side rendering for Web3Auth.",
+      "files": [],
+      "expectations": [
+        "The answer identifies ssr: false as the required Nuxt plugin configuration",
+        "The answer explains that Web3Auth requires browser APIs not available in SSR"
+      ]
+    },
+    {
+      "id": 15,
+      "prompt": "A developer wants to change the branding, colors, and logo of the Web3Auth modal to match their product. They are about to write a `whiteLabel` config object in code. Using the MCP tools, fetch the whitelabel documentation page at https://docs.metamask.io/embedded-wallets/sdk/react/advanced/whitelabel/ and identify where basic modal appearance should first be configured before touching code.",
+      "expected_output": "Basic modal appearance (colors, logo, branding) should first be configured directly on the dashboard, before writing any code.",
+      "files": [],
+      "expectations": [
+        "The answer uses get_doc to fetch the whitelabel documentation page",
+        "The answer identifies the dashboard as the primary place to configure branding",
+        "The answer explains that code-level whiteLabel config is optional/supplementary"
+      ]
+    },
+    {
+      "id": 16,
+      "prompt": "A developer wants to enable Wallet Services (fiat on-ramp, swaps, WalletConnect interoperability) for their users. They start writing a `walletServicesConfig` object in code. Using the MCP tools, fetch the Wallet Services documentation at https://docs.metamask.io/embedded-wallets/sdk/react/advanced/wallet-services/ and identify the recommended primary way to configure Wallet Services without writing any code.",
+      "expected_output": "Wallet Services should be configured through the Embedded Wallets dashboard. Writing a walletServicesConfig in code is optional.",
+      "files": [],
+      "expectations": [
+        "The answer uses get_doc to fetch the Wallet Services documentation",
+        "The answer identifies the dashboard as the recommended primary configuration method",
+        "The answer clarifies that SDK configuration is optional"
+      ]
+    },
+    {
+      "id": 17,
+      "prompt": "A developer is upgrading their app from an older Web3Auth integration (previously known as Plug and Play / PnP or Core Kit). According to the SKILL, what are the old product names that are now deprecated, and what is the single unified name all SDKs now fall under?",
+      "expected_output": "PnP, Core Kit, and Torus are deprecated. All SDKs are now unified under the name 'MetaMask Embedded Wallets'.",
+      "files": [],
+      "expectations": [
+        "The answer identifies PnP (Plug and Play) as deprecated",
+        "The answer identifies Core Kit as deprecated",
+        "The answer identifies Torus as deprecated",
+        "The answer states the new unified name is MetaMask Embedded Wallets"
+      ]
+    },
+    {
+      "id": 18,
+      "prompt": "A developer working on an Android app finds example repos described as 'aggregate verifier' examples, but the Web dashboard and React documentation only use the term 'grouped connections'. Using the MCP tools, search for examples with auth_method 'grouped' for Android and confirm: are 'aggregate verifier' and 'grouped connections' the same feature, just named differently across platforms?",
+      "expected_output": "Yes, aggregate verifier and grouped connections are the same feature — the term 'aggregate verifier' is used in older/Android examples while 'grouped connections' is the current dashboard terminology.",
+      "files": [],
+      "expectations": [
+        "The answer uses get_example or search_docs to find Android grouped/aggregate examples",
+        "The answer confirms that aggregate verifier and grouped connections are the same feature",
+        "The answer notes the terminology difference between platforms"
+      ]
+    },
+    {
+      "id": 19,
+      "prompt": "A developer reading older Web3Auth documentation sees the term 'verifier' used for setting up Google login or Firebase auth. The new dashboard now shows 'connections' instead. According to the SKILL's Authentication Concepts section, what is the current name for what was previously called a 'verifier', and what are the two identifiers it exposes that the old docs called 'verifier ID' and 'verifier name'?",
+      "expected_output": "The current term is 'connection' (formerly verifier). The identifier previously called 'verifier ID' is now the Auth Connection ID, and the JWT user identifier field is the user identifier (sub, email, etc.).",
+      "files": [],
+      "expectations": [
+        "The answer identifies 'connection' as the current term replacing 'verifier'",
+        "The answer identifies Auth Connection ID as the replacement for verifier ID",
+        "The answer references the JWT user identifier field (sub, email, etc.)"
+      ]
+    },
+    {
+      "id": 20,
+      "prompt": "A developer building an Android app with Web3Auth asks how to send a transaction on Ethereum after the user logs in. Using the MCP tools and SKILL, what must the developer do differently compared to a React web app, given that the Android SDK has no built-in blockchain provider?",
+      "expected_output": "After login, the developer must export the private key using web3Auth.getPrivKey() and then use a platform-native library (web3j or similar) to interact with Ethereum. Unlike the web SDK, there is no built-in EVM provider in the Android SDK.",
+      "files": [],
+      "expectations": [
+        "The answer notes the Android SDK has no built-in blockchain provider",
+        "The answer explains the private key must be exported using getPrivKey()",
+        "The answer recommends a platform-native library such as web3j",
+        "The answer contrasts this with the web SDK which has a built-in EVM provider"
+      ]
+    }
+  ]
+}

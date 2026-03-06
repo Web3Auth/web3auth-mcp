@@ -305,18 +305,23 @@ function buildMdxCandidates(repoPath: string): string[] {
 
 // ── Main: fetch doc page with fallback chain ─────────────────────────────
 
-export async function fetchDocPage(url: string): Promise<string> {
+export type DocPageResult = {
+  content: string;
+  source: "algolia" | "llms-txt" | "github";
+};
+
+export async function fetchDocPage(url: string): Promise<DocPageResult> {
   // Tier 1: Algolia
   const algoliaContent = await fetchDocPageFromAlgolia(url);
-  if (algoliaContent) return algoliaContent;
+  if (algoliaContent) return { content: algoliaContent, source: "algolia" };
 
   // Tier 2: llms.txt
   const llmsContent = await fetchDocPageFromLlmsTxt(url);
-  if (llmsContent) return llmsContent;
+  if (llmsContent) return { content: llmsContent, source: "llms-txt" };
 
   // Tier 3: GitHub raw MDX
   const githubContent = await fetchDocPageFromGitHub(url);
-  if (githubContent) return githubContent;
+  if (githubContent) return { content: githubContent, source: "github" };
 
   throw new Error(`Could not fetch content for ${url} from any source`);
 }
