@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-import { fileURLToPath } from "url";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { registerTools } from "./tools/register.js";
@@ -18,11 +17,7 @@ export async function startMcpServer(): Promise<void> {
   console.error("Web3Auth MCP Server v2.0 running on stdio");
 }
 
-// Only run when invoked directly (not when imported by cli.ts)
-const isEntryPoint = process.argv[1] === fileURLToPath(import.meta.url);
-if (isEntryPoint) {
-  startMcpServer().catch((err) => {
-    console.error("Fatal error:", err);
-    process.exit(1);
-  });
-}
+startMcpServer().catch((err) => {
+  console.error("Fatal error:", err);
+  process.exit(1);
+});
