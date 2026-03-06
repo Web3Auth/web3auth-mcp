@@ -44,6 +44,22 @@ Use these tools in this order:
    - Targeted: `get_sdk_reference platform="react" module="react-hooks"`
    - Call without `module` first to see available modules for a platform.
 
+### CLI Alternative
+
+If you are in a context where MCP tools are not available (non-MCP agents, debugging, scripting), the same operations are available via CLI:
+
+```bash
+web3auth search "React custom auth" --platform react
+web3auth doc https://docs.metamask.io/embedded-wallets/sdk/react/
+web3auth example "React Quick Start" --platform react --category quick-start
+web3auth sdk react --module react-hooks --focus hooks
+web3auth community "safari popup blocked"
+web3auth community --topic 1775          # fetch full thread by ID
+web3auth mcp                             # start stdio MCP server
+```
+
+Add `--json` to any command for machine-readable output.
+
 ### Decision workflow
 
 ```

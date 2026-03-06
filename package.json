@@ -4,11 +4,13 @@
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "web3auth-mcp": "dist/index.js"
+    "web3auth": "dist/cli.js",
+    "web3auth-mcp": "dist/cli.js"
   },
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "node dist/cli.js",
+    "start:mcp": "node dist/cli.js mcp",
     "dev": "tsc --watch",
     "dev:http": "next dev --webpack",
     "build:all": "tsc && next build --webpack"
@@ -25,6 +27,7 @@
   "description": "MCP server for MetaMask Embedded Wallets (Web3Auth) - helps AI coding agents integrate Web3Auth SDKs",
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.25.2",
+    "commander": "^14.0.3",
     "lru-cache": "^11.2.6",
     "mcp-handler": "^1.0.7",
     "next": "^16.1.6",
