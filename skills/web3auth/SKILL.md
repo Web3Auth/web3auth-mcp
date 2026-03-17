@@ -63,29 +63,27 @@ Add `--json` to any command for machine-readable output.
 ### Decision workflow
 
 ```
+For ALL workflows: first review Key Derivation Rules, Authentication Concepts,
+Platform Capability, and Platform Quick Reference for the user's platform.
+
 User asks "which SDK?" or "how do I integrate?"
-  -> Check Platform Compatibility below
-  -> Check Setup Flow, Common Misunderstandings and Platform Quick Reference wrt the platform selected.
   -> search_docs for the SDK doc page
   -> get_doc to read the full SDK page
   -> get_example for the matching quick-start
   -> Build from the example, guided by the doc
 
 User asks about a specific feature (custom auth, Wagmi, Solana, etc.)
-  -> Check Setup Flow, Common Misunderstandings and Platform Quick Reference wrt the platform selected.
   -> search_docs with feature keywords
   -> get_doc for the feature page
   -> get_example with matching auth_method or category
 
 User reports an error or unexpected behavior
-  -> Check Setup Flow, Common Misunderstandings and Platform Quick Reference wrt the platform selected.
   -> search_community with the error message / symptom
   -> Read relevant topics with topic_id
-  -> search_docs for troubleshooting pages or general guidance in sdk references or guides
+  -> search_docs for troubleshooting pages
   -> get_doc for the specific pages
 
-User needs to verify a type signature, debug an SDK error, or check exact API shape
-  -> Check Setup Flow, Common Misunderstandings and Platform Quick Reference wrt the platform selected.
+User needs to verify a type signature or debug an SDK error
   -> get_sdk_reference for the platform's type definitions
   -> Use a specific module if you know what you need (e.g., "react-hooks")
   -> NEVER use SDK source to discover features — use examples instead
@@ -119,6 +117,7 @@ Community: https://builder.metamask.io/c/embedded-wallets/5
 **Different any of these = different wallet address forever.**
 
 - NEVER change the Client ID or Sapphire network in production.
+- Sapphire Devnet/Mainnet are Web3Auth key-reconstruction networks — completely separate from blockchain devnet/mainnet. Do not confuse them.
 - Sapphire Devnet allows localhost. Sapphire Mainnet does NOT allow localhost.
 - Always use Devnet for local development. Switch to Mainnet only when deploying.
 - Do not use Devnet for production ever, it can cause loss in user wallets.
@@ -142,11 +141,13 @@ Community: https://builder.metamask.io/c/embedded-wallets/5
 
 ## Platform Capability
 
+**Shared across all SDKs:** Private key can be reconstructed for EVM (secp256k1) and Solana (ed25519). The curve can be changed for any other blockchain, making integration chain-agnostic — use any standard library for blockchain calls.
+
 ### Web SDK (@web3auth/modal)
 - Supports social login, external wallets (MetaMask Extension, WalletConnect, Coinbase, etc.), modal UI (can be used without modal as well, with web3auth completely hidden), smart accounts, multi-factor authentication (MFA), session management. Additionally has extra features like wallet UI, funding, walletconnect interoperability (your dapp wallet connected into other dapps supporting walletconnect), server side verification for users etc.
 - Everything is done with an iframe embedded within the user's web app. All frontend key management to be totally non custodial.
-- It has built-in EVM and Solana providers and allows chain config via dashboard for seamless blockchain connection. Additionally private key can be reconstructed for both EVM (secp256k1) and Solana (ed25519) and curve can be changed for integration with any other blockchain as well. This makes integration blockchain agnostic. Use any standard library for blockchain calls.
-- This is the most feature-complete SDK from Web3Auth and can be used in any Web Framework and even vanilla JS. It has 2 additional sub SDKs within it for better integration is 2 additional frameworks
+- Built-in EVM and Solana providers. Chain config via dashboard.
+- Most feature-complete SDK. Works in any web framework and vanilla JS. Has sub-SDKs for React and Vue:
 
 #### React Hooks (@web3auth/modal/react)
 - Provider built in hooks for easier integration for React, Next.js etc. It has native wagmi integration, helping make calls for EVM chains seamlessly. It also has native Solana Hooks, which help easy implementation for Solana integrations as well.
@@ -157,7 +158,7 @@ Community: https://builder.metamask.io/c/embedded-wallets/5
 ### React Native SDK (@web3auth/react-native-sdk) 
 - Invisible SDK for Social logins in React Native environment. Generates private key using socials within the frontend itself. No external wallets supported, user has to create their own UI as well. 
 - Smart accounts, server side verification and session management are available. Features like MFA, Wallet UI, Funding, Wallet Connect Interoperability, etc are supported via in app browser for security. 
-- Dashboard chain configuration is not supported, however includes pre built EVM and Solana providers from web3auth. Private key can be reconstructed for both EVM (secp256k1) and Solana (ed25519) and curve can be changed for integration with any other blockchain as well. This makes integration blockchain agnostic. Use any standard library for blockchain calls.
+- Dashboard chain configuration is not supported. Built-in EVM and Solana providers included.
 
 
 ### Mobile & Game Engine SDKs (Android, iOS, Flutter, Unity, Unreal Engine)
@@ -166,20 +167,13 @@ All mobile and game engine SDKs share a common pattern:
 
 - Invisible SDK for social logins. Generates private key using socials within the frontend. No external wallets supported; developers must create their own UI.
 - Server-side verification and session management are available. Features like MFA, Wallet UI, Funding, and WalletConnect Interoperability are supported via in-app browser. Smart accounts are supported via browser transaction functions.
-- Dashboard chain configuration is not supported. Private key can be reconstructed for both EVM (secp256k1) and Solana (ed25519), and the curve can be changed for any other blockchain. This makes integration blockchain agnostic. Use any standard library for blockchain calls.
+- Dashboard chain configuration is not supported. No built-in providers — must export private key and use platform-native libraries.
 
 ### Node SDK (@web3auth/node-sdk) 
-- Invisible SDK for Social logins in Node.js environment. Generates private key using socials within the node environment itself. No external wallets supported. 
-- Smart accounts, server side verification and session management are available. Features like MFA, Wallet UI, Funding, Wallet Connect Interoperability, etc are not supported because of backend integration.
-- Only works with custom authentication where providing a JWT is mandatory since it cannot trigger an implicit authentication.
-- Dashboard chain configuration is not supported, however includes pre built EVM and Solana providers from web3auth. Private key can be reconstructed for both EVM (secp256k1) and Solana (ed25519) and curve can be changed for integration with any other blockchain as well. This makes integration blockchain agnostic. Use any standard library for blockchain calls.
-- This integration is custodial to the dApp and non custodial to Web3Auth since backend key reconstruction is happening on dApp end.
-
-**Summary of key differences:**
-- Only Web SDKs support external wallet aggregation, modal UI.
-- Mobile/native SDKs (Android, iOS, Flutter, Unity, Unreal) generally require exporting the private key to use with a compatible blockchain library and have limited dashboard configuration support.
-- MFA and session management are broadly available across platforms, with the main exception of Node.js.
-- Dashboard chain configuration is mostly unavailable on mobile/native platforms, with exceptions for web SDKs and Node.js.
+- Backend-only SDK. Custom auth only (JWT mandatory — no social login UI). Stateless per-request key derivation.
+- Smart accounts and server side verification are available. MFA, Wallet UI, Funding, WalletConnect Interoperability are not supported (backend integration).
+- Dashboard chain configuration is not supported. Built-in EVM and Solana providers included.
+- Custodial to the dApp, non-custodial to Web3Auth — key reconstruction happens on dApp backend.
 
 ### SDK Recommendation Logic
 
@@ -199,13 +193,6 @@ All mobile and game engine SDKs share a common pattern:
 
 **Choose Node.js** when: Server-side wallet operations, AI agents, backend custody. Custom auth only (no social login UI). Stateless per-request key derivation.
 
-### Warnings to raise if user needs differ
-
-- If platform has no built-in provider (Android, iOS, Flutter, Unity, Unreal): *"This platform has no built-in EVM/Solana provider. After login, export the private key and use a platform-native library to interact with the blockchain."*
-- If platform lacks external wallets (everything except web): *"External wallet aggregation (MetaMask extension, WalletConnect, Coinbase) is only available on web SDK platforms."*
-- If platform lacks dashboard chain config (Android, iOS, Flutter, Unity, Unreal, React Native): *"Dashboard chain configuration is not supported on this platform. You must copy RPC endpoint URLs manually."*
-- If `chain = "other"` (non-EVM, non-Solana): *"For chains beyond EVM and Solana, always export the private key and use a chain-specific library."*
-
 ---
 
 ## Setup Flow
@@ -219,29 +206,87 @@ All mobile and game engine SDKs share a common pattern:
 
 ---
 
-## Common Misunderstandings
-
-- Different client IDs for the same user result in different wallet addresses forever. Always use the same client ID across all environments.
-- Blockchain's Devnet, Mainnet and Web3Auth Sapphire Devnet, Mainnet are completely separate; never mix them. Sapphire Devnet and Mainnet are web3auth networks for key reconstruction and both result in different wallet addresses.
-- Mainnet does NOT allow localhost. For local development, use Devnet.
-- Google login and email passwordless logins produce **different** wallets unless Grouped Connections are specifically configured on the dashboard.
-- The JWT `iat` (issued-at) must be within 60 seconds of current time, regardless of `exp`. Always issue fresh JWTs on every login.
-- Session management does **not** store keys server-side. The SDK encrypts and stores the key locally on the device. You can configure duration in the dashboard.
-- Toggling `useCoreKitKey` or `useSFAKey` in production will change **all** existing user wallet addresses. Never do this in production.
-
-
----
-
 ## Platform Quick Reference
 
-Read [`references/platforms.md`](./references/platforms.md) for platform-specific setup notes, gotchas, and configuration steps for all supported platforms:
+Platform-specific setup notes, gotchas, and configuration steps. Always read the relevant section before generating integration code — each platform has unique polyfill, deep-link, or provider requirements that cause failures if missed.
 
-- **Web**: React/Next.js/Vite, Vue/Nuxt, JavaScript (Angular/Svelte/Vanilla)
-- **Mobile**: React Native, Android, iOS, Flutter
-- **Game engines**: Unity, Unreal Engine
-- **Backend**: Node.js
+### React / Next.js / Vite
 
-Always read the relevant platform section before generating integration code — each platform has unique polyfill, deep-link, or provider requirements that cause failures if missed.
+- Provider-based architecture. All hooks must be within the provider tree. Never put the provider in a Next.js server component.
+- Two modes: Modal (pre-built UI) and No-Modal (headless). The `useWeb3AuthConnect` hook can define that.
+- Vite: needs `buffer` and `process` polyfills + `define: { global: globalThis }` in `vite.config.ts`. Read the Vite troubleshooting doc and refer to the example before configuring.
+- Next.js App Router: provider must be in a `"use client"` component.
+- Env var prefix: `VITE_` for Vite, `NEXT_PUBLIC_` for Next.js.
+- Do not use generic Wagmi hooks for Web3Auth state — use the dedicated Web3Auth Wagmi hooks for `isConnected`, `address`, etc.
+
+### Vue / Nuxt
+
+- Composables-based API. Must be called inside `setup()` or `<script setup>`.
+- Two modes: Modal (pre-built UI) and No-Modal (headless). The `useWeb3AuthConnect` composable can define that.
+- Needs `buffer` and `process` polyfills in `vue.config.js`. Read the Vue troubleshooting doc and refer to the example before configuring.
+- Nuxt: add `ssr: false` to the plugin. Load a client-only plugin to polyfill Buffer/process.
+- Do not use generic Wagmi composables for Web3Auth state — use the dedicated Web3Auth Wagmi composables.
+
+### JavaScript (Angular / Svelte / Vanilla)
+
+- Direct instantiation, no hooks/composables. Initialize before calling connect.
+- Angular: polyfill in `tsconfig` paths + dedicated `polyfills.ts`.
+- Every bundler needs `define global` set correctly.
+- Read the polyfill troubleshooting doc and refer to the example before configuring.
+
+### React Native (Bare / Expo)
+
+- Deep link URL scheme must match exactly between app config and dashboard allowlist.
+- Has built-in EVM and Solana providers (unlike native mobile SDKs).
+- Configure deep links in both `Info.plist` (iOS) and `AndroidManifest.xml` (Android).
+- Allowlist both bundle identifier (iOS) and package name (Android) in dashboard.
+- Expo Go does not support the required Web3Auth polyfills. Use a Custom Dev Client or EAS build.
+- Import order is critical: polyfills and `react-native-get-random-values` must come before any app code in the entry point.
+- Metro bundler polyfill configuration is entirely different from Vite or Webpack. Read the React Native Metro troubleshooting doc and refer to the example.
+
+### Android (Kotlin)
+
+- No built-in providers. After login: `web3Auth.getPrivKey()`, then use web3j or similar.
+- Configure deep link in `AndroidManifest.xml`. Allowlist package name in dashboard.
+- Dashboard chain configuration NOT supported. Copy RPC URLs manually.
+
+### iOS (Swift)
+
+- No built-in providers. After login: `web3Auth.getPrivKey()`, then use web3swift or similar.
+- Configure URL scheme in `Info.plist`. Set up `onOpenURL` handler for OAuth callback.
+- Allowlist bundle identifier in dashboard.
+- Dashboard chain configuration NOT supported. Copy RPC URLs manually.
+
+### Flutter (Dart)
+
+- No built-in providers. After login: `web3auth.getPrivKey()`, then use web3dart or similar.
+- Configure deep links in both `Info.plist` (iOS) and `AndroidManifest.xml` (Android).
+- Allowlist both bundle identifier (iOS) and package name (Android) in dashboard.
+- Install via `flutter pub add`, not npm.
+- Dashboard chain configuration NOT supported. Copy RPC URLs manually.
+
+### Unity (C#)
+
+- No built-in providers. Export private key after login; use a Unity-compatible EVM library.
+- Configure deep link scheme for OAuth. Allowlist bundle ID and scheme in dashboard.
+- Wallet Services UI is webview-based, not a native Unity component.
+- Dashboard chain configuration NOT supported. Copy RPC URLs manually.
+
+### Unreal Engine (C++/Blueprints)
+
+- SDK is under the **MetaMask** org on GitHub (not Web3Auth).
+- No built-in providers. Export private key after login; use an Unreal-compatible library.
+- Configure deep link. Allowlist bundle ID and scheme in dashboard.
+- Wallet Services UI is webview-based, not a native Unreal component.
+- Dashboard chain configuration NOT supported. Copy RPC URLs manually.
+
+### Node.js
+
+- Server-side only. No UI. Custom auth only (no social login).
+- Each request reconstructs the key from the JWT — stateless by design.
+- Use built-in EVM and Solana providers for signing. Export key for other chains.
+- Create a separate project on dashboard to avoid mixing server-side and client-side keys.
+- Best for: AI agents, server-side custody, automated transactions.
 
 ---
 
