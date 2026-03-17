@@ -44,22 +44,6 @@ Use these tools in this order:
    - Targeted: `get_sdk_reference platform="react" module="react-hooks"`
    - Call without `module` first to see available modules for a platform.
 
-### CLI Alternative
-
-If you are in a context where MCP tools are not available (non-MCP agents, debugging, scripting), the same operations are available via CLI:
-
-```bash
-web3auth search "React custom auth" --platform react
-web3auth doc https://docs.metamask.io/embedded-wallets/sdk/react/
-web3auth example "React Quick Start" --platform react --category quick-start
-web3auth sdk react --module react-hooks --focus hooks
-web3auth community "safari popup blocked"
-web3auth community --topic 1775          # fetch full thread by ID
-web3auth mcp                             # start stdio MCP server
-```
-
-Add `--json` to any command for machine-readable output.
-
 ### Decision workflow
 
 ```
@@ -172,7 +156,7 @@ All mobile and game engine SDKs share a common pattern:
 ### Node SDK (@web3auth/node-sdk) 
 - Backend-only SDK. Custom auth only (JWT mandatory — no social login UI). Stateless per-request key derivation.
 - Smart accounts and server side verification are available. MFA, Wallet UI, Funding, WalletConnect Interoperability are not supported (backend integration).
-- Dashboard chain configuration is not supported. Built-in EVM and Solana providers included.
+- Dashboard chain configuration supported. Built-in EVM and Solana providers included.
 - Custodial to the dApp, non-custodial to Web3Auth — key reconstruction happens on dApp backend.
 
 ### SDK Recommendation Logic
@@ -285,6 +269,7 @@ Platform-specific setup notes, gotchas, and configuration steps. Always read the
 - Server-side only. No UI. Custom auth only (no social login).
 - Each request reconstructs the key from the JWT — stateless by design.
 - Use built-in EVM and Solana providers for signing. Export key for other chains.
+- Dashboard chain configuration is supported. Configure chains on dashboard as usual.
 - Create a separate project on dashboard to avoid mixing server-side and client-side keys.
 - Best for: AI agents, server-side custody, automated transactions.
 
