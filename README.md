@@ -1,103 +1,213 @@
 # MetaMask Embedded Wallets MCP Server
 
-MCP server + per-platform skills for [MetaMask Embedded Wallets](https://docs.metamask.io/embedded-wallets/) (Web3Auth). Helps AI coding agents recommend SDKs, generate integration code, and troubleshoot issues.
+Build MetaMask Embedded Wallets integrations faster by giving your AI coding assistant live access to the
+documentation and deep knowledge of the SDK.
 
-## Tools
+There are two things to set up:
 
-| Tool | Description |
-|------|-------------|
-| `search_docs` | Search documentation and examples. Returns doc page links with snippets and matching examples |
-| `get_doc` | Fetch full content of a doc page. Uses Algolia → llms.txt → GitHub raw MDX fallback |
-| `get_example` | Fetch complete source code of an integration example from GitHub. **Primary reference for integration patterns** |
-| `get_sdk_reference` | Fetch SDK source code (types, interfaces, hooks) from open-source repos. For reference and debugging only |
-| `search_community` | Search the MetaMask Builder Hub forum for real user issues and workarounds |
+1. **Skill** — Teaches your AI assistant _how to think_ about the SDK: architecture, framework quirks, key derivation rules, and common mistakes. No code in the skill; the MCP provides that.
+2. **MCP server** — Gives your AI assistant real-time access to search docs, fetch examples, and look up SDK types.
 
-## Setup
+---
 
-### Cursor (MCP)
+## MCP Tools
 
-Add to your Cursor MCP settings (`.cursor/mcp.json`):
+| Tool                | What it does                                         |
+| ------------------- | ---------------------------------------------------- |
+| `search_docs`       | Search documentation and example projects            |
+| `get_doc`           | Fetch the full content of any doc page               |
+| `get_example`       | Fetch complete source code of an integration example |
+| `get_sdk_reference` | Fetch SDK types and hooks from the open-source repos |
+| `search_community`  | Search the MetaMask Builder Hub for real user issues |
+
+---
+
+## Skill
+
+The skill teaches your AI assistant the mental model for MetaMask Embedded Wallets. It includes SDK selection
+logic, key derivation rules, authentication concepts, platform quirks, and common mistakes that aren't obvious
+from the docs alone.
+
+> **Tip:** For the best experience, use the MCP server alongside the skill so that your LLM can fetch live docs
+> and examples rather than relying on static text.
+
+### Cursor
+
+```bash
+npx degit Web3Auth/web3auth-mcp/skills/web3auth .cursor/skills/web3auth
+```
+
+Cursor picks up any `SKILL.md` inside `.cursor/skills/` automatically and activates it when relevant.
+
+### Claude Code CLI
+
+```bash
+npx degit Web3Auth/web3auth-mcp/skills/web3auth /tmp/web3auth-skill
+cat /tmp/web3auth-skill/SKILL.md >> CLAUDE.md
+```
+
+### Claude Desktop
+
+Open **Claude Desktop → Settings → Custom Instructions** and paste the contents of [`skills/web3auth/SKILL.md`](./skills/web3auth/SKILL.md) directly.
+
+### Antigravity
+
+```bash
+npx degit Web3Auth/web3auth-mcp/skills/web3auth .agent/skills/web3auth
+```
+
+Antigravity picks up skills inside `.agent/skills/` automatically. For global installation across all
+projects, use `~/.gemini/antigravity/skills/` instead.
+
+### Other tools
+
+For any LLM tool with a system prompt or custom instructions field, paste the contents of
+[`skills/web3auth/SKILL.md`](./skills/web3auth/SKILL.md) directly.
+
+---
+
+## MCP Server Setup
+
+### Cursor
+
+The fastest way is one click:
+
+[![Add MetaMask Embedded Wallets MCP to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=web3auth&config=eyJ1cmwiOiJodHRwczovL21jcC53ZWIzYXV0aC5pbyJ9)
+
+Or add it manually. Open **Cursor Settings → Tools & Integrations → MCP** and add:
 
 ```json
 {
   "mcpServers": {
     "web3auth": {
-      "command": "node",
-      "args": ["/path/to/web3auth-mcp/dist/index.js"]
+      "url": "https://mcp.web3auth.io"
     }
   }
 }
 ```
 
-Or with npx (after publishing):
+### Claude Code CLI
+
+```bash
+claude mcp add --transport http web3auth https://mcp.web3auth.io
+```
+
+Or add manually to your project's `claude.json`:
+
+```json
+{
+  "mcpServers": {
+    "web3auth": {
+      "url": "https://mcp.web3auth.io"
+    }
+  }
+}
+```
+
+### Claude Desktop
+
+Open your Claude Desktop configuration file:
+
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+Add the server to the `mcpServers` section:
+
+```json
+{
+  "mcpServers": {
+    "web3auth": {
+      "url": "https://mcp.web3auth.io"
+    }
+  }
+}
+```
+
+Restart Claude Desktop and ask: _"Search MetaMask Embedded Wallets docs for React quick start"_ to verify the connection.
+
+### Antigravity
+
+Open your MCP configuration file:
+
+- **macOS/Linux**: `~/.config/antigravity/mcp.json`
+- **Windows**: `%APPDATA%\antigravity\mcp.json`
+
+Add the server to the `mcpServers` section:
+
+```json
+{
+  "mcpServers": {
+    "web3auth": {
+      "url": "https://mcp.web3auth.io"
+    }
+  }
+}
+```
+
+Antigravity hot-reloads MCP config changes — no restart required.
+
+### Codex CLI
+
+For Codex CLI or any stdio-only agent, use [mcp-remote](https://github.com/modelcontextprotocol/mcp-remote) to bridge the HTTP endpoint:
+
+```bash
+npm install -g mcp-remote
+```
+
+Then add to your agent's configuration:
 
 ```json
 {
   "mcpServers": {
     "web3auth": {
       "command": "npx",
-      "args": ["@web3auth/mcp-server"]
+      "args": ["-y", "mcp-remote", "https://mcp.web3auth.io"]
     }
   }
 }
 ```
 
-### Remote URL (Vercel)
+---
 
-You can run the MCP over HTTP by deploying to Vercel:
+## Static docs (llms.txt)
 
-```bash
-npm i -g vercel
-vercel deploy
+If your AI tool doesn't support MCP yet, use the static documentation file instead:
+
+```
+https://docs.metamask.io/llms-full.txt
 ```
 
-Then in Cursor MCP settings use the deployed URL:
+For tools that support the [llms.txt spec](https://llmstxt.org/) and can index docs automatically:
 
-```json
-{
-  "mcpServers": {
-    "web3auth": {
-      "url": "https://your-project.vercel.app/api/mcp"
-    }
-  }
-}
+```
+https://docs.metamask.io/llms.txt
 ```
 
-For clients that only support stdio, use [mcp-remote](https://github.com/modelcontextprotocol/mcp-remote) to bridge the HTTP endpoint:
+> **Warning:** The static file is a snapshot and may not include the latest updates. Use the MCP server when possible for always-current docs.
 
-```json
-{
-  "mcpServers": {
-    "web3auth": {
-      "command": "npx",
-      "args": ["-y", "mcp-remote", "https://your-project.vercel.app/api/mcp"]
-    }
-  }
-}
-```
+---
 
-### Environment Variables
+## Start building
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `GITHUB_TOKEN` | No | GitHub personal access token. Optional but recommended to avoid rate limits when fetching SDK source code via `get_sdk_reference` |
+Once the skill and MCP are set up, ask your AI assistant directly. Good starting prompts:
 
-### Skills
+- _"Add MetaMask Embedded Wallets to my React app with Google login."_
+- _"Set up social login wallets in my Next.js app using Wagmi."_
+- _"Integrate embedded wallets in my Flutter app."_
+- _"Why are my users getting different wallet addresses after I changed the login method?"_
 
-Skills teach your AI assistant *how to think* about each SDK -- architecture, framework quirks, and common misunderstandings. They contain no code (the MCP provides that).
+> **Tip:** Use planning mode (where available) for your initial prompt. Review the plan before generating code — this
+> catches architecture mistakes early and avoids config errors that would change wallet addresses in production.
 
-Copy the relevant skill folder to your project's `.cursor/skills/` directory:
+---
 
-```bash
-# Copy the unified skill (recommended for all projects)
-cp -r skills/web3auth .cursor/skills/
-```
+## Environment Variables
 
-Available skills:
+| Variable       | Required | Description                                                                                                                  |
+| -------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `GITHUB_TOKEN` | No       | GitHub personal access token. Optional but recommended to avoid rate limits when fetching SDK source code via `get_sdk_reference` |
 
-| Skill | Use when building with... |
-|-------|--------------------------|
-| `web3auth` | Unified skill — all platforms, SDK selection, integration patterns |
+---
 
 ## Development
 
@@ -112,14 +222,14 @@ npm run dev        # Watch mode
 
 When a product update ships, only a few files need changing:
 
-| What changed | File to update |
-|---|---|
-| SDK architecture / new gotchas | `skills/web3auth/SKILL.md` |
-| New doc pages or URL changes | `src/content/registry.ts` |
-| Platform capabilities changed | `src/content/platform-matrix.ts` |
-| SDK repo structure changed | `src/content/sdk-registry.ts` |
-| New tool category needed | `src/tools/register.ts` |
-| Doc page content changed | Nothing (fetched live) |
+| What changed                     | File to update                    |
+| -------------------------------- | --------------------------------- |
+| SDK architecture / new gotchas   | `skills/web3auth/SKILL.md`        |
+| New doc pages or URL changes     | `src/content/registry.ts`         |
+| Platform capabilities changed    | `src/content/platform-matrix.ts`  |
+| SDK repo structure changed       | `src/content/sdk-registry.ts`     |
+| New tool category needed         | `src/tools/register.ts`           |
+| Doc page content changed         | Nothing (fetched live)            |
 
 ## License
 
